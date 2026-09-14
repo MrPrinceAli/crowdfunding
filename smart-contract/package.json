@@ -1,0 +1,21 @@
+{
+  "name": "crowdfunding-smart-contract",
+  "version": "1.0.0",
+  "description": "Smart contract crowdfunding keep-it-all dengan voting penarikan dana",
+  "scripts": {
+    "node": "hardhat node",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "seed:local": "hardhat run scripts/seed.js --network localhost"
+  },
+  "author": "spandan joshi",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "chai": "^4.5.0",
+    "ethers": "^5.8.0",
+    "hardhat": "^2.29.1"
+  }
+}

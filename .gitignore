@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+frontend/.next/
+frontend/out/
+
+# Hardhat build output (dibuat ulang dengan `npm run compile`)
+smart-contract/cache/
+frontend/artifacts/build-info/
+frontend/artifacts/**/*.dbg.json
+frontend/artifacts/hardhat/
+# Contract khusus test, tidak dipakai frontend
+frontend/artifacts/contracts/test/
+
+# Test coverage
+coverage/
+
+# Environment (salin dari .env.example)
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+*.log

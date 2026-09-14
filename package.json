@@ -1,0 +1,21 @@
+{
+  "name": "crowdfunding-dapp",
+  "private": true,
+  "description": "Platform galang dana berbasis smart contract Ethereum (monorepo: smart-contract + frontend)",
+  "scripts": {
+    "install:all": "npm install && npm --prefix smart-contract install && npm --prefix frontend install",
+    "node": "npm --prefix smart-contract run node",
+    "deploy:local": "npm --prefix smart-contract run deploy:local",
+    "seed:local": "npm --prefix smart-contract run seed:local",
+    "dev": "npm --prefix frontend run dev",
+    "test": "npm --prefix smart-contract test && npm --prefix frontend test",
+    "lint": "npm --prefix frontend run lint",
+    "build": "npm --prefix frontend run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "prettier-plugin-solidity": "^1.4.3"
+  }
+}
