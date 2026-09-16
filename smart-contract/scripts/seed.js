@@ -1,4 +1,4 @@
-// Mengisi blockchain lokal dengan data demo: 3 kampanye + beberapa donasi.
+// Mengisi blockchain lokal dengan data demo: 3 kampanye, beberapa donasi, kabar, edit, dan nama profil.
 // Jalankan setelah deploy:  npm run seed:local
 // Alamat contract bisa diganti lewat env CROWDFUNDING_ADDRESS (default: hasil deploy pertama di Hardhat node).
 const hre = require("hardhat");
@@ -27,6 +27,9 @@ async function main() {
       days: 30,
       target: "10",
       title: "Beasiswa untuk 50 anak di pelosok",
+      category: "Pendidikan",
+      location: "Nusa Tenggara Timur",
+      image: "https://picsum.photos/seed/beasiswa/1200/600",
       desc: "Bantu biaya sekolah anak-anak di desa terpencil selama satu tahun penuh, termasuk buku dan seragam.",
     },
     {
@@ -35,6 +38,9 @@ async function main() {
       days: 14,
       target: "5",
       title: "Renovasi perpustakaan desa",
+      category: "Sosial",
+      location: "Jawa Tengah",
+      image: "https://picsum.photos/seed/perpustakaan/1200/600",
       desc: "Perpustakaan desa kami atapnya bocor. Dana akan dipakai untuk memperbaiki atap dan menambah rak buku.",
     },
     {
@@ -43,6 +49,9 @@ async function main() {
       days: 45,
       target: "3",
       title: "Air bersih untuk Nusa Tenggara",
+      category: "Lingkungan",
+      location: "Nusa Tenggara Timur",
+      image: "",
       desc: "Membangun sumur bor dan tandon air untuk 200 keluarga yang kesulitan akses air bersih.",
     },
   ];
@@ -51,7 +60,16 @@ async function main() {
     await (
       await crowdfunding
         .connect(campaign.creator)
-        .createProject(eth(campaign.min), endOfDay(campaign.days), eth(campaign.target), campaign.title, campaign.desc)
+        .createProject(
+          eth(campaign.min),
+          endOfDay(campaign.days),
+          eth(campaign.target),
+          campaign.title,
+          campaign.desc,
+          campaign.category,
+          campaign.image,
+          campaign.location,
+        )
     ).wait();
   }
 
@@ -59,22 +77,47 @@ async function main() {
   const [beasiswa, renovasi, airBersih] = projects.slice(-3);
 
   const donations = [
-    { donor: account1, project: beasiswa, amount: "4.5" },
-    { donor: account2, project: beasiswa, amount: "2" },
-    { donor: account0, project: renovasi, amount: "1.2" },
-    { donor: account3, project: airBersih, amount: "3" },
+    { donor: account1, project: beasiswa, amount: "4.5", message: "Semoga anak-anak bisa terus sekolah 🙏" },
+    { donor: account2, project: beasiswa, amount: "2", message: "Semangat untuk para relawan!" },
+    { donor: account0, project: renovasi, amount: "1.2", message: "" },
+    { donor: account3, project: airBersih, amount: "3", message: "Air bersih adalah hak semua orang." },
   ];
 
   for (const donation of donations) {
     await (
-      await crowdfunding.connect(donation.donor).contribute(donation.project, { value: eth(donation.amount) })
+      await crowdfunding
+        .connect(donation.donor)
+        .contribute(donation.project, donation.message, { value: eth(donation.amount) })
     ).wait();
   }
+
+  // Kabar dari penggalang dana & badge terverifikasi (admin = Account #0, akun deployer)
+  const beasiswaProject = await ethers.getContractAt("Project", beasiswa);
+  await (
+    await beasiswaProject
+      .connect(account0)
+      .postUpdate("Terima kasih para donatur! Kami sudah mendata 50 anak penerima beasiswa di tiga desa.")
+  ).wait();
+  await (await crowdfunding.connect(account0).setVerified(airBersih, true)).wait();
+
+  // Riwayat edit kampanye & nama profil
+  await (
+    await beasiswaProject
+      .connect(account0)
+      .editCampaign(
+        "Bantu biaya sekolah anak-anak di desa terpencil selama satu tahun penuh, termasuk buku, seragam, dan transportasi.",
+        "Pendidikan",
+        "https://picsum.photos/seed/beasiswa/1200/600",
+        "Nusa Tenggara Timur",
+      )
+  ).wait();
+  await (await crowdfunding.connect(account0).setDisplayName("Yayasan Pelita Nusantara")).wait();
+  await (await crowdfunding.connect(account2).setDisplayName("Komunitas Air Bersih NTT")).wait();
 
   console.log("Data demo berhasil dibuat:");
   console.log(`- Beasiswa   ${beasiswa}  (pembuat Account #0, donatur #1 & #2)`);
   console.log(`- Renovasi   ${renovasi}  (pembuat Account #1, donatur #0)`);
-  console.log(`- Air bersih ${airBersih}  (pembuat Account #2, donatur #3, target tercapai)`);
+  console.log(`- Air bersih ${airBersih}  (pembuat Account #2, donatur #3, target tercapai, terverifikasi)`);
 }
 
 main()

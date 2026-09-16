@@ -1,5 +1,8 @@
 node_modules/
 package-lock.json
 frontend/.next/
-frontend/artifacts/
+frontend/lib/abi/
+smart-contract/artifacts/
 smart-contract/cache/
+coverage/
+smart-contract/coverage.json

@@ -5,13 +5,10 @@ node_modules/
 frontend/.next/
 frontend/out/
 
-# Hardhat build output (dibuat ulang dengan `npm run compile`)
+# Hardhat build output (dibuat ulang dengan `npm run compile`);
+# ABI yang dipakai frontend di-export ke frontend/lib/abi dan ikut masuk repo
 smart-contract/cache/
-frontend/artifacts/build-info/
-frontend/artifacts/**/*.dbg.json
-frontend/artifacts/hardhat/
-# Contract khusus test, tidak dipakai frontend
-frontend/artifacts/contracts/test/
+smart-contract/artifacts/
 
 # Test coverage
 coverage/
@@ -24,3 +21,4 @@ coverage/
 # OS / editor
 .DS_Store
 *.log
+smart-contract/coverage.json

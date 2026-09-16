@@ -4,10 +4,13 @@
   "description": "Smart contract crowdfunding keep-it-all dengan voting penarikan dana",
   "scripts": {
     "node": "hardhat node",
-    "compile": "hardhat compile",
+    "compile": "hardhat compile && node scripts/export-abi.js",
     "test": "hardhat test",
-    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
-    "seed:local": "hardhat run scripts/seed.js --network localhost"
+    "deploy:local": "npm run compile && hardhat run scripts/deploy.js --network localhost",
+    "seed:local": "hardhat run scripts/seed.js --network localhost",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "coverage": "hardhat coverage",
+    "slither": "slither . --config-file slither.config.json --fail-medium"
   },
   "author": "spandan joshi",
   "license": "MIT",
@@ -16,6 +19,8 @@
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "chai": "^4.5.0",
     "ethers": "^5.8.0",
-    "hardhat": "^2.29.1"
+    "hardhat": "^2.29.1",
+    "hardhat-gas-reporter": "^1.0.10",
+    "solidity-coverage": "^0.8.17"
   }
 }

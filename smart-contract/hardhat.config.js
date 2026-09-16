@@ -1,5 +1,7 @@
 require("@nomiclabs/hardhat-ethers");
 require("@nomicfoundation/hardhat-chai-matchers");
+require("solidity-coverage");
+require("hardhat-gas-reporter");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -9,9 +11,11 @@ module.exports = {
       optimizer: { enabled: true, runs: 200 },
     },
   },
-  paths: {
-    // ABI hasil compile langsung dipakai frontend
-    artifacts: "../frontend/artifacts",
+  // Laporan biaya gas per fungsi: `npm run test:gas`
+  gasReporter: {
+    enabled: process.env.REPORT_GAS === "true",
+    currency: "USD",
+    excludeContracts: ["TestWallet"],
   },
   networks: {
     hardhat: {
