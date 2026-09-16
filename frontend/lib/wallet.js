@@ -1,4 +1,5 @@
 import { CHAIN_ID, NETWORK_NAME, RPC_URL } from "./config";
+import { translate } from "./i18n";
 
 const TARGET_CHAIN = {
   chainId: `0x${CHAIN_ID.toString(16)}`,
@@ -27,7 +28,7 @@ export const switchToTargetNetwork = async () => {
 /** Minta akses akun MetaMask dan pastikan berada di jaringan yang benar */
 export const connectWallet = async () => {
   if (!window.ethereum) {
-    throw new Error("MetaMask tidak ditemukan. Pasang ekstensi MetaMask terlebih dahulu.");
+    throw new Error(translate("wallet.notFound"));
   }
   await window.ethereum.request({ method: "eth_requestAccounts" });
   await switchToTargetNetwork();

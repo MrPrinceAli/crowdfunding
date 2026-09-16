@@ -13,3 +13,15 @@ export const NETWORK_NAME = process.env.NEXT_PUBLIC_NETWORK_NAME || "Hardhat Loc
 
 // Block explorer untuk link bukti transaksi, misalnya https://sepolia.etherscan.io (kosong = tanpa link)
 export const EXPLORER_URL = (process.env.NEXT_PUBLIC_EXPLORER_URL || "").replace(/\/$/, "");
+
+/** Jaringan Hardhat lokal: tanpa MetaMask, akun Hardhat yang tidak terkunci dipakai sebagai mode dev */
+export const IS_LOCAL_CHAIN = CHAIN_ID === 31337;
+
+/** Alamat publik aplikasi untuk tautan share (kosong = pakai alamat halaman saat ini) */
+export const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
+
+/** RPC Ethereum mainnet untuk membaca nama & avatar ENS (kosongkan untuk menonaktifkan ENS) */
+export const ENS_RPC_URL =
+  process.env.NEXT_PUBLIC_ENS_RPC_URL === undefined
+    ? "https://ethereum-rpc.publicnode.com"
+    : process.env.NEXT_PUBLIC_ENS_RPC_URL;

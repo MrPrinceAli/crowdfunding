@@ -15,6 +15,15 @@ describe("getErrorMessage", () => {
     expect(getErrorMessage(error)).toBe("Transaksi ditolak contract: Withdraw request is not approved");
   });
 
+  test("error dari ethers v6", () => {
+    expect(getErrorMessage({ code: "ACTION_REJECTED", message: "user rejected action" })).toBe(
+      "Transaksi dibatalkan di MetaMask",
+    );
+    expect(getErrorMessage({ reason: "Only contributors before the request can vote" })).toBe(
+      "Transaksi ditolak contract: Only contributors before the request can vote",
+    );
+  });
+
   test("error lain diteruskan apa adanya", () => {
     expect(getErrorMessage(new Error("Network error"))).toBe("Network error");
     expect(getErrorMessage(null)).toBe("Terjadi kesalahan");

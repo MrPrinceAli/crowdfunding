@@ -11,9 +11,9 @@ import {
 
 describe("format", () => {
   test("konversi ETH <-> wei", () => {
-    expect(etherToWei("1.5")).toBe("1500000000000000000");
-    expect(weiToEther("250000000000000000")).toBe("0.25");
-    expect(weiToEther(undefined)).toBe("0");
+    expect(etherToWei("1.5")).toBe(1500000000000000000n);
+    expect(weiToEther(250000000000000000n)).toBe(0.25);
+    expect(weiToEther(undefined)).toBe(0);
   });
 
   test("formatEth memakai format angka Indonesia", () => {

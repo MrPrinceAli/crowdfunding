@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { intlLocale } from "./i18n";
 
 // Kurs ETH -> IDR dari CoinGecko (tanpa API key). Di-cache 5 menit, dipakai bersama semua komponen.
 const PRICE_URL = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=idr";
@@ -61,7 +62,7 @@ export const useEthIdrPrice = () => {
 export const formatIdr = (eth, price) => {
   const value = Number(eth || 0) * price;
   const compact = value >= 1000000;
-  return new Intl.NumberFormat("id-ID", {
+  return new Intl.NumberFormat(intlLocale(), {
     style: "currency",
     currency: "IDR",
     notation: compact ? "compact" : "standard",
