@@ -1,213 +1,274 @@
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import CampaignCover from "../components/campaign/CampaignCover";
-import Footer from "../components/layout/Footer";
+import { useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
+import CampaignSlides from "../components/landing/CampaignSlides";
+import FlowStory from "../components/landing/FlowStory";
+import {
+  CampaignBuilderChapter,
+  CtaChapter,
+  DonationTrackChapter,
+  FeatureStackChapter,
+  StatsChapter,
+  VoteChapter,
+  WalletChapter,
+} from "../components/landing/chapters";
+import { constellation, contract, dataWave, flow, heart, sphere, voteBars, wallet } from "../components/landing/shapes";
 import Logo from "../components/layout/Logo";
-import { HeartIcon, ShieldIcon, SparklesIcon, UsersIcon, WalletIcon } from "../components/ui/Icons";
-import { QUORUM_PERCENT, VOTING_PERIOD_DAYS } from "../lib/campaign";
-import { getErrorMessage, toastError } from "../lib/toast";
-import { connectWallet } from "../lib/wallet";
-import { initBlockchain, selectAccount } from "../store/wallet";
+import PreferenceControls from "../components/layout/PreferenceControls";
+import { useI18n } from "../components/providers/PreferencesProvider";
+import { HandsIcon, WalletIcon } from "../components/ui/Icons";
+import { useWallet } from "../hooks/useWallet";
+import { loadDonationsForCampaigns } from "../lib/contracts";
+import { selectCampaigns } from "../store/campaigns";
 
-const FEATURES = [
-  {
-    icon: <ShieldIcon className="h-6 w-6" />,
-    title: "Transparan di blockchain",
-    description: "Setiap donasi dan penarikan tercatat di smart contract dan bisa diperiksa siapa saja.",
+// Posisi & ukuran bentuk partikel per bab (x, y = pusat di layar 0..1; scale terhadap sisi terpendek)
+// Di layar kecil teks mengalir di atas partikel, jadi bentuk dibuat lebih redup di tengah layar
+const MOBILE_BACKDROP = { x: 0.5, y: 0.5, scale: 0.42, alpha: 0.3 };
+const LAYOUTS = {
+  hero: {
+    desktop: { x: 0.72, y: 0.54, scale: 0.46, alpha: 0.35 },
+    mobile: { x: 0.5, y: 0.32, scale: 0.46, alpha: 0.25 },
   },
-  {
-    icon: <UsersIcon className="h-6 w-6" />,
-    title: "Donatur ikut memutuskan",
-    description: `Setiap penarikan dana di-voting donatur: disetujui mayoritas (50%+1), atau mayoritas pemilih setelah ${VOTING_PERIOD_DAYS} hari dengan kuorum ${QUORUM_PERCENT}%.`,
+  wallet: { desktop: { x: 0.28, y: 0.52, scale: 0.28 }, mobile: MOBILE_BACKDROP },
+  contract: { desktop: { x: 0.72, y: 0.5, scale: 0.5, alpha: 0.25 }, mobile: MOBILE_BACKDROP },
+  flow: { desktop: { x: 0.5, y: 0.62, scale: 0.55, alpha: 0.5 }, mobile: { x: 0.5, y: 0.62, scale: 0.5, alpha: 0.35 } },
+  vote: {
+    desktop: { x: 0.5, y: 0.55, scale: 0.6, alpha: 0.18 },
+    mobile: { x: 0.5, y: 0.55, scale: 0.55, alpha: 0.15 },
   },
-  {
-    icon: <WalletIcon className="h-6 w-6" />,
-    title: "Tanpa perantara",
-    description: "Donasi dikirim langsung dari dompet MetaMask kamu ke kontrak kampanye.",
+  stats: { desktop: { x: 0.5, y: 0.5, scale: 0.55, alpha: 0.3 }, mobile: { x: 0.5, y: 0.5, scale: 0.4, alpha: 0.2 } },
+  features: {
+    desktop: { x: 0.5, y: 0.5, scale: 0.6, alpha: 0.45 },
+    mobile: { x: 0.5, y: 0.5, scale: 0.5, alpha: 0.3 },
   },
-];
+  cta: { desktop: { x: 0.5, y: 0.5, scale: 0.34, alpha: 0.6 }, mobile: { x: 0.5, y: 0.45, scale: 0.4, alpha: 0.4 } },
+};
 
-const STEPS = [
-  { title: "Hubungkan dompet", description: "Masuk dengan MetaMask di jaringan Hardhat lokal." },
-  { title: "Buat atau pilih kampanye", description: "Tentukan target, donasi minimum, dan batas waktu." },
-  { title: "Donasi dengan ETH", description: "Progress kampanye langsung diperbarui dari blockchain." },
-  { title: "Voting penarikan dana", description: "Donatur menyetujui atau menolak setiap permintaan penarikan." },
-];
+// Warna grup partikel [utama, kedua] per bab (token --l-*)
+const COLORS = {
+  hero: ["neon", "violet"],
+  wallet: ["neon", "violet"],
+  contract: ["violet", "neon"],
+  flow: ["gold", "neon"],
+  vote: ["neon", "violet"],
+  stats: ["neon", "violet"],
+  features: ["violet", "neon"],
+  cta: ["rose", "violet"],
+};
+
+const RECENT_DONATIONS = 10;
+
+/** Judul yang tiap katanya muncul bergantian saat halaman dibuka */
+const KineticLine = ({ text, startIndex, className = "" }) => (
+  <span className={`block ${className}`}>
+    {text.split(" ").map((word, index) => (
+      <span key={`${word}-${index}`} className="l-word mr-[0.22em]" style={{ "--i": startIndex + index }}>
+        {word}
+      </span>
+    ))}
+  </span>
+);
+
+const Header = ({ onStart, isConnecting }) => {
+  const { t } = useI18n();
+  return (
+    <header
+      className="l-line fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl"
+      style={{ background: "color-mix(in srgb, var(--l-paper) 72%, transparent)" }}
+    >
+      <div className="l-progress absolute inset-x-0 bottom-0 h-px" />
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <Logo href="/" />
+        <nav className="flex items-center gap-2 sm:gap-3">
+          <Link href="/dashboard" className="hidden text-sm font-semibold hover:underline md:inline">
+            {t("nav.explore")}
+          </Link>
+          <Link href="/stats" className="hidden text-sm font-semibold hover:underline md:inline">
+            {t("nav.stats")}
+          </Link>
+          <PreferenceControls />
+          <button className="l-btn-primary hidden px-4 py-2 sm:inline-flex" onClick={onStart} disabled={isConnecting}>
+            <WalletIcon className="h-4 w-4" />
+            {t("wallet.connect")}
+          </button>
+        </nav>
+      </div>
+    </header>
+  );
+};
 
 const Home = () => {
+  const { t } = useI18n();
   const router = useRouter();
-  const dispatch = useDispatch();
-  const account = useSelector(selectAccount);
-  const [connecting, setConnecting] = useState(false);
+  const campaigns = useSelector(selectCampaigns);
+  const { account, walletType, connect, isConnecting } = useWallet();
+  const [chapter, setChapter] = useState(0);
 
-  // Dompet sudah terhubung -> langsung ke daftar kampanye
+  // Dompet MetaMask sudah terhubung -> langsung ke daftar kampanye
   useEffect(() => {
-    if (account) router.push("/dashboard");
-  }, [account, router]);
+    if (account && walletType === "metamask") router.push("/dashboard");
+  }, [account, walletType, router]);
 
-  const connect = async () => {
-    setConnecting(true);
-    try {
-      await connectWallet();
-      await dispatch(initBlockchain());
-    } catch (error) {
-      toastError(`${getErrorMessage(error)}. Pastikan MetaMask sudah di-unlock, lalu coba lagi.`);
-    } finally {
-      setConnecting(false);
-    }
+  // Mode dev (tanpa MetaMask di jaringan lokal) langsung masuk; selain itu minta akses MetaMask dulu
+  const start = async () => {
+    if (walletType === "dev" || (await connect())) router.push("/dashboard");
   };
 
-  return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <Head>
-        <title>Crowdfunding — Galang dana transparan</title>
-      </Head>
+  const visible = campaigns?.filter((campaign) => !campaign.isTakenDown);
+  const stats = visible
+    ? {
+        total: visible.length,
+        raised: visible.reduce((sum, campaign) => sum + campaign.raisedAmount, 0),
+        active: visible.filter((campaign) => !campaign.isCancelled && campaign.deadline * 1000 > Date.now()).length,
+        voting: visible.reduce((sum, campaign) => sum + campaign.activeVotingCount, 0),
+      }
+    : { total: null, raised: null, active: null, voting: null };
 
-      <header className="absolute inset-x-0 top-0 z-10">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Logo href="/" />
-          <button className="btn-secondary hidden sm:inline-flex" onClick={connect} disabled={connecting}>
-            <WalletIcon className="h-4 w-4" />
-            Hubungkan Dompet
-          </button>
-        </div>
-      </header>
+  // Donasi terbaru (dengan pesan) untuk lintasan bukti donasi
+  const [donations, setDonations] = useState(null);
+  const addressKey = (visible || []).map((campaign) => campaign.address).join(",");
+  useEffect(() => {
+    if (!campaigns) return;
+    const titles = Object.fromEntries((visible || []).map((campaign) => [campaign.address, campaign.title]));
+    loadDonationsForCampaigns(addressKey ? addressKey.split(",") : [])
+      .then((list) =>
+        setDonations(
+          list
+            .slice(-RECENT_DONATIONS)
+            .reverse()
+            .map((donation) => ({ ...donation, campaignTitle: titles[donation.campaignAddress] })),
+        ),
+      )
+      .catch((error) => {
+        console.error(error);
+        setDonations([]);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addressKey, Boolean(campaigns)]);
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50 via-white to-white pb-20 pt-32 sm:pt-40">
-        <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-        <div className="absolute -top-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-emerald-300/30 blur-3xl" />
+  // Bentuk & tata letak tidak berubah; hanya konten (bahasa, statistik) yang ikut dirender ulang
+  const engineChapters = useMemo(
+    () =>
+      [
+        ["mulai", sphere, "hero"],
+        ["dompet", wallet, "wallet"],
+        ["contract", contract, "contract"],
+        ["donasi", flow, "flow"],
+        ["voting", voteBars, "vote"],
+        ["statistik", dataWave, "stats"],
+        ["fitur", constellation, "features"],
+        ["gabung", heart, "cta"],
+      ].map(([id, shape, key]) => ({ id, shape, layout: LAYOUTS[key], colors: COLORS[key] })),
+    [],
+  );
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
-          <div className="text-center lg:text-left">
-            <span className="badge gap-1.5 border border-emerald-200 bg-white text-emerald-700">
-              <SparklesIcon className="h-3.5 w-3.5" />
-              Didukung smart contract Ethereum
-            </span>
-            <h1 className="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              Wujudkan kebaikan bersama,{" "}
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                transparan
-              </span>{" "}
-              sampai ke blockchain.
-            </h1>
-            <p className="mx-auto mt-6 max-w-xl text-lg text-slate-600 lg:mx-0">
-              Galang dana untuk ide dan aksi sosialmu, atau dukung kampanye orang lain. Setiap donasi tercatat di
-              blockchain dan penarikannya diawasi langsung oleh para donatur.
+  const chapters = [
+    {
+      id: "mulai",
+      label: t("landing.chapterStart"),
+      motion: "parallax",
+      content: (
+        <div className="grid items-center gap-5 md:gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+          <div className="order-2 lg:order-1">
+            <p className="l-line l-raised hidden items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] sm:inline-flex sm:text-xs">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--l-neon)" }} />
+              {t("landing.eyebrow")}
             </p>
-            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
+            <h1 className="text-[clamp(2.4rem,10vw,7rem)] font-extrabold leading-[0.95] tracking-tighter sm:mt-6 lg:text-[clamp(3.5rem,6.6vw,7rem)]">
+              <KineticLine text={t("landing.heroLine1")} startIndex={0} />
+              <KineticLine text={t("landing.heroLine2")} startIndex={2} className="l-outline" />
+              <span className="block">
+                <span className="l-word" style={{ "--i": 4 }}>
+                  <span
+                    className="bg-clip-text text-transparent"
+                    style={{ backgroundImage: "linear-gradient(90deg, var(--l-neon), var(--l-violet))" }}
+                  >
+                    {t("landing.heroLine3")}
+                  </span>
+                </span>
+              </span>
+            </h1>
+            <p className="l-muted mt-6 hidden max-w-lg text-base leading-relaxed sm:block sm:text-lg">
+              {t("landing.subtitle")}
+            </p>
+            <div className="mt-5 flex gap-3 sm:mt-8">
               <button
-                className="btn-primary w-full px-7 py-3.5 text-base sm:w-auto"
-                onClick={connect}
-                disabled={connecting}
+                className="l-btn-primary flex-1 px-4 py-3 text-sm sm:flex-none sm:px-7 sm:py-4 sm:text-base"
+                onClick={start}
+                disabled={isConnecting}
               >
                 <Image src="/metamask-fox.svg" alt="" width={20} height={20} />
-                {connecting ? "Menghubungkan..." : "Hubungkan MetaMask"}
+                {isConnecting ? t("wallet.connecting") : t("landing.connectMetaMask")}
               </button>
-              <a href="#cara-kerja" className="btn-secondary w-full px-7 py-3.5 text-base sm:w-auto">
-                Lihat cara kerja
-              </a>
-            </div>
-            <p className="mt-4 text-sm text-slate-500">
-              Belum punya MetaMask?{" "}
-              <a
-                href="https://metamask.io/download/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-emerald-600 hover:underline"
+              <Link
+                href="/dashboard"
+                className="l-btn-ghost flex-1 px-4 py-3 text-sm sm:flex-none sm:px-7 sm:py-4 sm:text-base"
               >
-                Pasang ekstensinya
-              </a>
-            </p>
-          </div>
-
-          {/* Ilustrasi kartu kampanye */}
-          <div className="relative mx-auto w-full max-w-md">
-            <div className="absolute -inset-4 rotate-3 rounded-3xl bg-gradient-to-br from-emerald-200 to-teal-100" />
-            <div className="card relative overflow-hidden">
-              <CampaignCover address="demo" className="h-44" iconClassName="-bottom-8 -right-6 h-40 w-40">
-                <span className="badge absolute left-4 top-4 bg-sky-100 text-sky-700">Aktif</span>
-              </CampaignCover>
-              <div className="p-6">
-                <p className="text-lg font-bold text-slate-900">Beasiswa untuk 50 anak di pelosok</p>
-                <p className="mt-1 text-sm text-slate-500">Bantu biaya sekolah selama satu tahun penuh.</p>
-                <div className="progress-track mt-5">
-                  <div className="progress-bar" style={{ width: "72%" }} />
-                </div>
-                <div className="mt-3 flex justify-between text-sm">
-                  <span className="font-bold text-slate-900">
-                    7,2 ETH <span className="font-normal text-slate-500">dari 10 ETH</span>
-                  </span>
-                  <span className="font-bold text-emerald-600">72%</span>
-                </div>
-              </div>
-            </div>
-            <div className="card absolute -right-6 top-28 hidden items-center gap-3 px-4 py-3 sm:flex">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                <HeartIcon className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-sm font-bold text-slate-900">+0,5 ETH</p>
-                <p className="text-xs text-slate-500">donasi baru masuk</p>
-              </div>
+                {t("nav.explore")} <span aria-hidden="true">→</span>
+              </Link>
             </div>
           </div>
+          <div className="order-1 mx-auto w-full max-w-[21rem] sm:max-w-sm lg:order-2 lg:max-w-md">
+            <CampaignSlides paused={chapter !== 0} />
+          </div>
         </div>
-      </section>
+      ),
+    },
+    { id: "dompet", label: t("landing.step1Title"), motion: "parallax", content: <WalletChapter /> },
+    {
+      id: "contract",
+      label: t("landing.step2Title"),
+      sticky: true,
+      minHeight: "240vh",
+      content: <CampaignBuilderChapter />,
+    },
+    {
+      id: "donasi",
+      label: t("landing.step3Title"),
+      sticky: true,
+      minHeight: "300vh",
+      content: <DonationTrackChapter donations={donations} />,
+    },
+    { id: "voting", label: t("landing.step4Title"), sticky: true, minHeight: "240vh", content: <VoteChapter /> },
+    {
+      id: "statistik",
+      label: t("landing.statsEyebrow"),
+      minHeight: "110vh",
+      content: <StatsChapter stats={stats} start={chapter >= 5} />,
+    },
+    { id: "fitur", label: t("landing.bentoEyebrow"), content: <FeatureStackChapter /> },
+    {
+      id: "gabung",
+      label: t("landing.ctaButton"),
+      minHeight: "130vh",
+      content: <CtaChapter onStart={start} isConnecting={isConnecting} />,
+    },
+  ];
 
-      {/* Fitur */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-6 md:grid-cols-3">
-          {FEATURES.map((feature) => (
-            <div key={feature.title} className="card p-6">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                {feature.icon}
-              </span>
-              <h3 className="mt-5 text-lg font-bold text-slate-900">{feature.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">{feature.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+  return (
+    <div className="landing relative min-h-screen overflow-x-clip">
+      <Head>
+        <title>{t("landing.pageTitle")}</title>
+      </Head>
+      <div className="l-grain" aria-hidden="true" />
+      <Header onStart={start} isConnecting={isConnecting} />
 
-      {/* Cara kerja */}
-      <section id="cara-kerja" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-emerald-600">Cara kerja</p>
-          <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">
-            Empat langkah menuju kampanye pertamamu
-          </h2>
-        </div>
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((step, index) => (
-            <div key={step.title} className="relative rounded-2xl bg-slate-50 p-6">
-              <span className="text-4xl font-extrabold text-emerald-200">0{index + 1}</span>
-              <h3 className="mt-3 font-bold text-slate-900">{step.title}</h3>
-              <p className="mt-1 text-sm text-slate-500">{step.description}</p>
-            </div>
-          ))}
-        </div>
+      <main>
+        <FlowStory chapters={chapters} engineChapters={engineChapters} onChapterChange={setChapter} />
+      </main>
 
-        <div className="relative mt-16 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 px-6 py-12 text-center sm:px-12">
-          <div className="bg-grid absolute inset-0 opacity-20" />
-          <h2 className="relative text-2xl font-extrabold text-white sm:text-3xl">Siap mulai berbuat baik?</h2>
-          <p className="relative mx-auto mt-3 max-w-xl text-emerald-50">
-            Hubungkan dompetmu dan jelajahi kampanye yang sedang berjalan.
-          </p>
-          <button
-            className="btn relative mt-8 bg-white px-7 py-3.5 text-base text-emerald-700 hover:bg-emerald-50"
-            onClick={connect}
-            disabled={connecting}
-          >
-            Mulai Sekarang
-          </button>
+      <footer className="l-line border-t">
+        <div className="l-muted mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm sm:flex-row sm:px-6 lg:px-8">
+          <span className="flex items-center gap-2 font-semibold" style={{ color: "var(--l-ink)" }}>
+            <HandsIcon className="l-accent h-4 w-4" />
+            Crowdfunding
+          </span>
+          <p>{t("footer.tagline")}</p>
         </div>
-      </section>
-
-      <Footer />
+      </footer>
     </div>
   );
 };
