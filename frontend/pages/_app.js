@@ -1,4 +1,5 @@
 import "../styles/globals.css";
+import "../styles/landing.css";
 import "nprogress/nprogress.css";
 import "react-toastify/dist/ReactToastify.css";
 import "lenis/dist/lenis.css";

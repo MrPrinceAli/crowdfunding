@@ -625,7 +625,6 @@ const id = {
   "landing.heroLine1": "Kebaikan",
   "landing.heroLine2": "yang bisa",
   "landing.heroLine3": "diaudit.",
-  "landing.scrollHint": "Gulir",
   "landing.journeyEyebrow": "Perjalanan satu donasi",
   "landing.statsEyebrow": "Live dari blockchain",
   "landing.statsTitle": "Angka yang tidak bisa dipoles.",

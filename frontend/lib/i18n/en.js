@@ -629,7 +629,6 @@ const en = {
   "landing.heroLine1": "Kindness",
   "landing.heroLine2": "you can",
   "landing.heroLine3": "audit.",
-  "landing.scrollHint": "Scroll",
   "landing.journeyEyebrow": "The journey of one donation",
   "landing.statsEyebrow": "Live from the blockchain",
   "landing.statsTitle": "Numbers no one can polish.",
