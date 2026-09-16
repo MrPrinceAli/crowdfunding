@@ -1,6 +1,7 @@
 import { getAddress } from "ethers";
 import { CHAIN_ID, IS_LOCAL_CHAIN } from "../lib/config";
 import { getAdminAddress, getDevAccounts } from "../lib/contracts";
+import { reportError } from "../lib/log";
 
 const WALLET_LOADED = "wallet/loaded";
 const BLOCK_RECEIVED = "wallet/blockReceived";
@@ -51,7 +52,7 @@ const detectWallet = async () => {
 export const loadWallet = () => async (dispatch) => {
   const [wallet, adminAddress] = await Promise.all([
     detectWallet().catch((error) => {
-      console.error("Gagal membaca dompet:", error);
+      reportError("Membaca dompet", error);
       return { walletType: null, account: null, chainId: null };
     }),
     getAdminAddress().catch(() => null),

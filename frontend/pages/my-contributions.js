@@ -16,6 +16,7 @@ import { coverGradient } from "../lib/campaign";
 import { loadMyContributions, loadPendingVotes } from "../lib/contracts";
 import { formatEth, sameAddress, shortAddress } from "../lib/format";
 import { selectCampaigns } from "../store/campaigns";
+import { reportError } from "../lib/log";
 
 const TABS = ["history", "mine"];
 
@@ -116,7 +117,7 @@ const MyContributions = () => {
     loadMyContributions(account)
       .then(setContributions)
       .catch((error) => {
-        console.error(error);
+        reportError("Memuat kontribusi", error);
         setContributions((current) => current || []);
       });
   }, [account]);
@@ -131,7 +132,7 @@ const MyContributions = () => {
     loadPendingVotes(account, campaignAddresses)
       .then(setPendingVotes)
       .catch((error) => {
-        console.error(error);
+        reportError("Memuat kontribusi", error);
         setPendingVotes([]);
       });
   }, [account, contributions]);

@@ -19,6 +19,7 @@ import { useIdentity } from "../providers/IdentityProvider";
 import { useI18n } from "../providers/PreferencesProvider";
 import { BellIcon, ClockIcon } from "../ui/Icons";
 import Loader from "../ui/Loader";
+import { reportError } from "../../lib/log";
 
 /** Lonceng notifikasi: aktivitas terbaru dari kampanye milik, didukung, atau difavoritkan akun */
 const NotificationBell = () => {
@@ -40,7 +41,7 @@ const NotificationBell = () => {
     loadNotifications({ account, campaigns, favorites: favoritesKey ? favoritesKey.split(",") : [] })
       .then(setItems)
       .catch((error) => {
-        console.error("Gagal memuat notifikasi:", error);
+        reportError("Memuat notifikasi", error);
         setItems((current) => current || []);
       });
   }, [account, campaigns, favoritesKey]);

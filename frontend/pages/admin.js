@@ -21,6 +21,7 @@ import AddressName from "../components/ui/AddressName";
 import { useIdentity } from "../components/providers/IdentityProvider";
 import { refreshCampaign, selectCampaigns } from "../store/campaigns";
 import { store } from "../store";
+import { onError } from "../lib/log";
 
 const TABS = ["reported", "queue", "verified", "appeals", "takenDown"];
 
@@ -142,7 +143,7 @@ const AdminPage = () => {
       }),
     )
       .then((entries) => setReportsByCampaign(Object.fromEntries(entries)))
-      .catch(console.error);
+      .catch(onError("Memuat laporan kampanye"));
   }, [reportedKey]);
 
   useEffect(reloadReports, [reloadReports]);

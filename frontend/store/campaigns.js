@@ -1,4 +1,5 @@
 import { loadCampaign, loadCampaigns } from "../lib/contracts";
+import { reportError } from "../lib/log";
 
 const CAMPAIGNS_LOADED = "campaigns/loaded";
 const CAMPAIGNS_FAILED = "campaigns/failed";
@@ -32,7 +33,7 @@ export const loadAllCampaigns = () => async (dispatch) => {
   try {
     dispatch({ type: CAMPAIGNS_LOADED, payload: await loadCampaigns() });
   } catch (error) {
-    console.error("Gagal memuat kampanye:", error);
+    reportError("Memuat daftar kampanye", error);
     dispatch({ type: CAMPAIGNS_FAILED, payload: error.shortMessage || error.message });
   }
 };

@@ -15,6 +15,7 @@ import { loadDonationsForCampaigns } from "../lib/contracts";
 import { formatEth, formatNumber } from "../lib/format";
 import { platformSummary } from "../lib/stats";
 import { selectCampaigns } from "../store/campaigns";
+import { reportError } from "../lib/log";
 
 const TOP_CAMPAIGNS = 5;
 
@@ -29,7 +30,7 @@ const StatsPage = () => {
     loadDonationsForCampaigns(addressKey ? addressKey.split(",") : [])
       .then(setDonations)
       .catch((error) => {
-        console.error(error);
+        reportError("Memuat donasi untuk statistik", error);
         setDonations((current) => current || []);
       });
   }, [campaigns, addressKey]);

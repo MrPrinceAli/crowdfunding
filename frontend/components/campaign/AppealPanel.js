@@ -9,6 +9,7 @@ import { formatDate, formatDateTime, sameAddress } from "../../lib/format";
 import { toastError } from "../../lib/toast";
 import { useI18n } from "../providers/PreferencesProvider";
 import Modal from "../ui/Modal";
+import { onError } from "../../lib/log";
 
 /** Form teks wajib untuk mengajukan banding (penggalang dana) atau memberi keputusan (admin) */
 const TextForm = ({ id, label, placeholder, note, submitLabel, submitClass = "btn-primary", onSubmit }) => {
@@ -65,7 +66,7 @@ const AppealPanel = ({ campaign, onChanged }) => {
   const [modal, setModal] = useState(null); // "appeal" | "accept" | "reject"
 
   const reload = useCallback(() => {
-    loadAppeal(campaign.address).then(setAppeal).catch(console.error);
+    loadAppeal(campaign.address).then(setAppeal).catch(onError("Memuat banding"));
   }, [campaign.address]);
 
   useEffect(reload, [reload, campaign.appealStatus]);

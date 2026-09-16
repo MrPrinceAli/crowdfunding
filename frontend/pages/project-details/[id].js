@@ -39,6 +39,7 @@ import { loadCampaignPreview, previewImageUrl, requestOrigin } from "../../lib/o
 import { groupByContributor } from "../../lib/stats";
 import { refreshCampaign, selectCampaign, selectCampaigns, selectCampaignsError } from "../../store/campaigns";
 import { selectAccount } from "../../store/wallet";
+import { onError, reportError } from "../../lib/log";
 
 /** Meta tag pratinjau link (dibaca di server agar WhatsApp/X bisa menampilkan judul & gambar) */
 export const getServerSideProps = async ({ params, req }) => {
@@ -123,17 +124,19 @@ const CampaignDetail = ({ og }) => {
   /** Muat semua data halaman dari blockchain (awal, setelah aksi, dan setiap ada blok baru) */
   const reloadAll = useCallback(() => {
     if (!address) return;
-    const keep = (setter) => (error) => {
-      console.error(error);
+    const keep = (label, setter) => (error) => {
+      reportError(label, error);
       setter((current) => current || []);
     };
-    loadDonations(address).then(setDonations).catch(keep(setDonations));
-    loadWithdrawRequests(address).then(setWithdrawRequests).catch(keep(setWithdrawRequests));
-    loadUpdates(address).then(setUpdates).catch(keep(setUpdates));
-    loadReports(address).then(setReports).catch(keep(setReports));
-    loadActivity(address).then(setActivity).catch(keep(setActivity));
-    if (account) loadAccountCampaignInfo(address, account).then(setAccountInfo).catch(console.error);
-    dispatch(refreshCampaign(address)).catch(console.error);
+    loadDonations(address).then(setDonations).catch(keep("Memuat donasi", setDonations));
+    loadWithdrawRequests(address)
+      .then(setWithdrawRequests)
+      .catch(keep("Memuat permintaan penarikan", setWithdrawRequests));
+    loadUpdates(address).then(setUpdates).catch(keep("Memuat kabar", setUpdates));
+    loadReports(address).then(setReports).catch(keep("Memuat laporan", setReports));
+    loadActivity(address).then(setActivity).catch(keep("Memuat riwayat aktivitas", setActivity));
+    if (account) loadAccountCampaignInfo(address, account).then(setAccountInfo).catch(onError("Memuat data akun"));
+    dispatch(refreshCampaign(address)).catch(onError("Memuat kampanye"));
   }, [address, account, dispatch]);
 
   useEffect(() => {

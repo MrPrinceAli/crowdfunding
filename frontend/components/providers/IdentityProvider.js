@@ -3,6 +3,7 @@ import { useBlockRefresh } from "../../hooks/useBlockRefresh";
 import { loadDisplayNames } from "../../lib/contracts";
 import { isEnsEnabled, lookupEns, readEnsCache, writeEnsCache } from "../../lib/ens";
 import { shortAddress } from "../../lib/format";
+import { onError } from "../../lib/log";
 
 const IdentityContext = createContext(null);
 
@@ -17,13 +18,7 @@ export const IdentityProvider = ({ children }) => {
   const [ens, setEns] = useState({});
   const requested = useRef(new Set());
 
-  const refreshNames = useCallback(
-    () =>
-      loadDisplayNames()
-        .then(setNames)
-        .catch((error) => console.error("Gagal memuat nama profil:", error)),
-    [],
-  );
+  const refreshNames = useCallback(() => loadDisplayNames().then(setNames).catch(onError("Memuat nama profil")), []);
 
   useEffect(() => {
     refreshNames();

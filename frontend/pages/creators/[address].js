@@ -22,6 +22,7 @@ import { formatEth, sameAddress } from "../../lib/format";
 import { toastSuccess } from "../../lib/toast";
 import { selectCampaigns } from "../../store/campaigns";
 import { selectAccount } from "../../store/wallet";
+import { reportError } from "../../lib/log";
 
 /** Profil & statistik penggalang dana: semua kampanye dari satu alamat dompet */
 const CreatorProfile = () => {
@@ -45,7 +46,7 @@ const CreatorProfile = () => {
     loadDonationsForCampaigns(addresses)
       .then(setDonations)
       .catch((error) => {
-        console.error(error);
+        reportError("Memuat donasi penggalang dana", error);
         setDonations((current) => current || []);
       });
   }, [campaigns, createdKey]);

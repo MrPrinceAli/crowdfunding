@@ -2,7 +2,7 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import CampaignSlides from "../components/landing/CampaignSlides";
 import FlowStory from "../components/landing/FlowStory";
@@ -23,6 +23,7 @@ import { HandsIcon, WalletIcon } from "../components/ui/Icons";
 import { useWallet } from "../hooks/useWallet";
 import { loadDonationsForCampaigns } from "../lib/contracts";
 import { selectCampaigns } from "../store/campaigns";
+import { reportError } from "../lib/log";
 
 // Posisi & ukuran bentuk partikel per bab (x, y = pusat di layar 0..1; scale terhadap sisi terpendek)
 // Di layar kecil teks mengalir di atas partikel, jadi bentuk dibuat lebih redup di tengah layar
@@ -127,27 +128,30 @@ const Home = () => {
       }
     : { total: null, raised: null, active: null, voting: null };
 
-  // Donasi terbaru (dengan pesan) untuk lintasan bukti donasi
+  // Donasi terbaru (dengan pesan) untuk lintasan bukti donasi.
+  // Daftar kampanye diperbarui tiap blok baru, jadi effect hanya bergantung pada daftar alamatnya;
+  // judul kampanye dibaca lewat ref agar tidak ikut memicu pemuatan ulang.
   const [donations, setDonations] = useState(null);
   const addressKey = (visible || []).map((campaign) => campaign.address).join(",");
+  const titlesRef = useRef({});
+  titlesRef.current = Object.fromEntries((visible || []).map((campaign) => [campaign.address, campaign.title]));
+
   useEffect(() => {
-    if (!campaigns) return;
-    const titles = Object.fromEntries((visible || []).map((campaign) => [campaign.address, campaign.title]));
-    loadDonationsForCampaigns(addressKey ? addressKey.split(",") : [])
+    if (!addressKey) return;
+    loadDonationsForCampaigns(addressKey.split(","))
       .then((list) =>
         setDonations(
           list
             .slice(-RECENT_DONATIONS)
             .reverse()
-            .map((donation) => ({ ...donation, campaignTitle: titles[donation.campaignAddress] })),
+            .map((donation) => ({ ...donation, campaignTitle: titlesRef.current[donation.campaignAddress] })),
         ),
       )
       .catch((error) => {
-        console.error(error);
+        reportError("Memuat donasi terbaru", error);
         setDonations([]);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addressKey, Boolean(campaigns)]);
+  }, [addressKey]);
 
   // Bentuk & tata letak tidak berubah; hanya konten (bahasa, statistik) yang ikut dirender ulang
   const engineChapters = useMemo(
