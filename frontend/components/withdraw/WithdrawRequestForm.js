@@ -5,12 +5,13 @@ import { QUORUM_PERCENT, VOTING_PERIOD_DAYS } from "../../lib/campaign";
 import { createWithdrawRequest } from "../../lib/contracts";
 import { formatEth } from "../../lib/format";
 import { toastError } from "../../lib/toast";
-import { selectAccount, selectWeb3 } from "../../store/wallet";
+import { selectAccount } from "../../store/wallet";
+import { useI18n } from "../providers/PreferencesProvider";
 import IdrValue from "../ui/IdrValue";
 
 /** Form pengajuan penarikan dana untuk pembuat kampanye */
 const WithdrawRequestForm = ({ campaign, onCreated }) => {
-  const web3 = useSelector(selectWeb3);
+  const { t } = useI18n();
   const account = useSelector(selectAccount);
   const { run, isBusy } = useTransaction();
   const [reason, setReason] = useState("");
@@ -19,52 +20,42 @@ const WithdrawRequestForm = ({ campaign, onCreated }) => {
   const availableBalance = Math.max(0, campaign.balance - campaign.pendingWithdrawAmount);
 
   const submit = async () => {
-    if (!reason.trim()) {
-      toastError("Tuliskan alasan penarikan agar donatur bisa menilai sebelum voting");
-      return;
-    }
-    if (!amount || Number(amount) <= 0) {
-      toastError("Masukkan jumlah penarikan");
-      return;
-    }
+    if (!reason.trim()) return toastError(t("withdrawForm.errorReason"));
+    if (!amount || Number(amount) <= 0) return toastError(t("withdrawForm.errorAmount"));
     if (Number(amount) > availableBalance) {
-      toastError(`Jumlah penarikan melebihi saldo yang tersedia (${formatEth(availableBalance)})`);
-      return;
+      return toastError(t("withdrawForm.errorBalance", { amount: formatEth(availableBalance) }));
     }
 
     const success = await run(
       "request",
-      () =>
-        createWithdrawRequest(web3, account, campaign.address, {
-          description: reason.trim(),
-          amount,
-          recipient: account,
-        }),
-      `Permintaan penarikan ${formatEth(amount)} berhasil dibuat`,
+      (signer) =>
+        createWithdrawRequest(signer, campaign.address, { description: reason.trim(), amount, recipient: account }),
+      t("withdrawForm.created", { amount: formatEth(amount) }),
     );
     if (success) {
       setReason("");
       setAmount("");
       onCreated?.();
     }
+    return undefined;
   };
 
   return (
     <>
-      <div className="rounded-xl bg-slate-50 p-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Saldo tersedia untuk diajukan</p>
-        <p className="mt-1 text-xl font-bold text-slate-900">{formatEth(availableBalance)}</p>
+      <div className="surface-muted rounded-xl p-4">
+        <p className="text-muted text-xs font-medium uppercase tracking-wide">{t("withdrawForm.available")}</p>
+        <p className="text-strong mt-1 text-xl font-bold">{formatEth(availableBalance)}</p>
       </div>
 
-      <p className="mt-5 text-sm font-semibold text-slate-900">Ajukan penarikan dana</p>
+      <p className="text-strong mt-5 text-sm font-semibold">{t("withdrawForm.title")}</p>
       <label className="label mt-3" htmlFor="withdraw-reason">
-        Alasan penarikan
+        {t("withdrawForm.reason")}
       </label>
       <textarea
         id="withdraw-reason"
         rows={2}
         maxLength={280}
-        placeholder="Contoh: Pembelian 50 paket buku dan seragam"
+        placeholder={t("withdrawForm.reasonPlaceholder")}
         value={reason}
         onChange={(event) => setReason(event.target.value)}
         disabled={isBusy}
@@ -72,7 +63,7 @@ const WithdrawRequestForm = ({ campaign, onCreated }) => {
       />
 
       <label className="label" htmlFor="withdraw-amount">
-        Jumlah
+        {t("withdrawForm.amount")}
       </label>
       <div className="relative">
         <input
@@ -87,17 +78,15 @@ const WithdrawRequestForm = ({ campaign, onCreated }) => {
           disabled={isBusy}
           className="input py-3 pr-14"
         />
-        <span className="absolute inset-y-0 right-4 flex items-center text-sm font-semibold text-slate-400">ETH</span>
+        <span className="text-faint absolute inset-y-0 right-4 flex items-center text-sm font-semibold">ETH</span>
       </div>
-      {Number(amount) > 0 && <IdrValue eth={amount} className="mt-1.5 block text-xs text-slate-500" />}
+      {Number(amount) > 0 && <IdrValue eth={amount} className="text-muted mt-1.5 block text-xs" />}
 
       <button className="btn-primary mt-3 w-full py-3" onClick={submit} disabled={isBusy || availableBalance <= 0}>
-        {isBusy ? "Menunggu konfirmasi..." : "Ajukan Penarikan"}
+        {isBusy ? t("tx.waiting") : t("withdrawForm.submit")}
       </button>
-      <p className="mt-3 text-xs text-slate-500">
-        Dana bisa ditarik berapa pun jumlah yang terkumpul, setelah disetujui donatur: langsung jika lebih dari 50%
-        donatur setuju, atau setelah voting {VOTING_PERIOD_DAYS} hari jika minimal {QUORUM_PERCENT}% donatur memilih dan
-        lebih banyak yang setuju. Batalkan pengajuan lama untuk melepas saldonya.
+      <p className="text-muted mt-3 text-xs">
+        {t("withdrawForm.rules", { days: VOTING_PERIOD_DAYS, quorum: QUORUM_PERCENT })}
       </p>
     </>
   );

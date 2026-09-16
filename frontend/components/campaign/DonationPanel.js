@@ -1,59 +1,73 @@
 import { useState } from "react";
-import { useSelector } from "react-redux";
 import { useTransaction } from "../../hooks/useTransaction";
-import { campaignStatus, daysLeft, isBeforeDeadline } from "../../lib/campaign";
-import { contribute } from "../../lib/contracts";
+import { useWallet } from "../../hooks/useWallet";
+import {
+  ABANDON_PERIOD_DAYS,
+  campaignStatus,
+  daysLeft,
+  isBeforeDeadline,
+  MAX_MESSAGE_LENGTH,
+} from "../../lib/campaign";
+import { claimRefund, contribute } from "../../lib/contracts";
 import { formatDate, formatEth, formatTimeLeft, sameAddress } from "../../lib/format";
 import { toastError } from "../../lib/toast";
-import { selectAccount, selectWeb3 } from "../../store/wallet";
-import WithdrawRequestForm from "../withdraw/WithdrawRequestForm";
+import { useI18n } from "../providers/PreferencesProvider";
 import IdrValue from "../ui/IdrValue";
-import { ShieldIcon } from "../ui/Icons";
+import { ShieldIcon, WalletIcon } from "../ui/Icons";
+import WithdrawRequestForm from "../withdraw/WithdrawRequestForm";
 
 /** Ringkasan transparansi dana: terkumpul / sudah ditarik / tersisa */
-const FundSummary = ({ campaign }) => (
-  <>
-    <dl className="mt-5 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-center">
-      {[
-        { label: "Terkumpul", value: campaign.raisedAmount, className: "text-slate-900" },
-        { label: "Sudah ditarik", value: campaign.withdrawnAmount, className: "text-amber-600" },
-        { label: "Tersisa", value: campaign.balance, className: "text-emerald-600" },
-      ].map((item) => (
-        <div key={item.label} className="min-w-0">
-          <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{item.label}</dt>
-          <dd className={`mt-0.5 truncate text-sm font-bold ${item.className}`}>{formatEth(item.value)}</dd>
-          <IdrValue eth={item.value} prefix="" className="block truncate text-[11px] text-slate-400" />
-        </div>
-      ))}
-    </dl>
-    {campaign.pendingWithdrawAmount > 0 && (
-      <p className="mt-2 text-center text-xs text-slate-500">
-        {formatEth(campaign.pendingWithdrawAmount)} sedang diajukan untuk ditarik
-      </p>
-    )}
-  </>
-);
+const FundSummary = ({ campaign }) => {
+  const { t } = useI18n();
+  return (
+    <>
+      <dl className="surface-muted mt-5 grid grid-cols-3 gap-2 rounded-xl p-3 text-center">
+        {[
+          { label: t("fund.raised"), value: campaign.raisedAmount, className: "text-strong" },
+          {
+            label: t("fund.withdrawn"),
+            value: campaign.withdrawnAmount,
+            className: "text-amber-600 dark:text-amber-400",
+          },
+          { label: t("fund.remaining"), value: campaign.balance, className: "text-accent" },
+        ].map((item) => (
+          <div key={item.label} className="min-w-0">
+            <dt className="text-muted text-[11px] font-medium uppercase tracking-wide">{item.label}</dt>
+            <dd className={`mt-0.5 truncate text-sm font-bold ${item.className}`}>{formatEth(item.value)}</dd>
+            <IdrValue eth={item.value} prefix="" className="text-faint block truncate text-[11px]" />
+          </div>
+        ))}
+      </dl>
+      {campaign.pendingWithdrawAmount > 0 && !campaign.isRefundOpen && (
+        <p className="text-muted mt-2 text-center text-xs">
+          {t("fund.pending", { amount: formatEth(campaign.pendingWithdrawAmount) })}
+        </p>
+      )}
+    </>
+  );
+};
 
 const DonationForm = ({ campaign, onContributed }) => {
-  const web3 = useSelector(selectWeb3);
-  const account = useSelector(selectAccount);
+  const { t } = useI18n();
   const { run, isBusy } = useTransaction();
   const [amount, setAmount] = useState("");
+  const [message, setMessage] = useState("");
 
   const quickAmounts = [1, 2, 5].map((multiplier) => campaign.minContribution * multiplier);
 
   const donate = async () => {
     if (!amount || Number(amount) < campaign.minContribution) {
-      toastError(`Minimal donasi adalah ${formatEth(campaign.minContribution)}`);
+      toastError(t("donation.errorMinimum", { amount: formatEth(campaign.minContribution) }));
       return;
     }
     const success = await run(
       "donate",
-      () => contribute(web3, account, campaign.address, amount),
-      `Terima kasih! Donasi ${formatEth(amount)} berhasil 💚`,
+      (signer) => contribute(signer, campaign.address, amount, message.trim()),
+      t("donation.success", { amount: formatEth(amount) }),
     );
     if (success) {
       setAmount("");
+      setMessage("");
       onContributed?.();
     }
   };
@@ -61,7 +75,7 @@ const DonationForm = ({ campaign, onContributed }) => {
   return (
     <>
       <label className="label" htmlFor="donation">
-        Jumlah donasi
+        {t("donation.amount")}
       </label>
       <div className="relative">
         <input
@@ -75,9 +89,9 @@ const DonationForm = ({ campaign, onContributed }) => {
           disabled={isBusy}
           className="input py-3 pr-14 text-base font-semibold"
         />
-        <span className="absolute inset-y-0 right-4 flex items-center text-sm font-semibold text-slate-400">ETH</span>
+        <span className="text-faint absolute inset-y-0 right-4 flex items-center text-sm font-semibold">ETH</span>
       </div>
-      {Number(amount) > 0 && <IdrValue eth={amount} className="mt-1.5 block text-xs text-slate-500" />}
+      {Number(amount) > 0 && <IdrValue eth={amount} className="text-muted mt-1.5 block text-xs" />}
 
       <div className="mt-3 flex flex-wrap gap-2">
         {quickAmounts.map((value) => (
@@ -86,85 +100,163 @@ const DonationForm = ({ campaign, onContributed }) => {
             key={value}
             onClick={() => setAmount(String(value))}
             disabled={isBusy}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-              Number(amount) === value
-                ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                : "border-slate-200 text-slate-600 hover:border-emerald-300"
-            }`}
+            className={`chip rounded-lg px-3 ${Number(amount) === value ? "chip-active" : ""}`}
           >
             {formatEth(value)}
           </button>
         ))}
       </div>
 
-      <button className="btn-primary mt-5 w-full py-3 text-base" onClick={donate} disabled={isBusy}>
-        {isBusy ? "Menunggu konfirmasi..." : "Donasi Sekarang"}
+      <label className="label mt-4" htmlFor="donation-message">
+        {t("donation.message")} <span className="text-faint font-normal">({t("common.optional")})</span>
+      </label>
+      <textarea
+        id="donation-message"
+        rows={2}
+        maxLength={MAX_MESSAGE_LENGTH}
+        className="input resize-none"
+        placeholder={t("donation.messagePlaceholder")}
+        value={message}
+        onChange={(event) => setMessage(event.target.value)}
+        disabled={isBusy}
+      />
+      <p className="text-faint mt-1 text-right text-xs">
+        {message.length}/{MAX_MESSAGE_LENGTH}
+      </p>
+
+      <button className="btn-primary mt-4 w-full py-3 text-base" onClick={donate} disabled={isBusy}>
+        {isBusy ? t("tx.waiting") : t("donation.submit")}
       </button>
-      <p className="mt-3 text-center text-xs text-slate-500">Donasi minimum {formatEth(campaign.minContribution)}</p>
+      <p className="text-muted mt-3 text-center text-xs">
+        {t("donation.minimum", { amount: formatEth(campaign.minContribution) })}
+      </p>
     </>
   );
 };
 
-/** Panel samping halaman detail: progres, ringkasan dana, donasi, dan pengajuan penarikan */
-const DonationPanel = ({ campaign, onChanged }) => {
-  const account = useSelector(selectAccount);
+/**
+ * Refund untuk donatur: kampanye dibatalkan (penggalang dana / takedown admin) atau dana terbengkalai
+ * (penggalang dana tidak aktif lama setelah kampanye berakhir).
+ */
+const RefundBox = ({ campaign, accountInfo, onClaimed }) => {
+  const { t } = useI18n();
+  const { run, isBusy } = useTransaction();
+
+  // Status dibaca dari contract (isRefundOpen / isAbandoned), bukan dari jam komputer
+  if (!campaign.isRefundOpen && isBeforeDeadline(campaign.deadline)) return null;
+
+  if (!campaign.isRefundOpen) {
+    return (
+      <p className="surface-muted text-muted mt-4 rounded-xl p-3 text-xs leading-relaxed">
+        {t("abandoned.info", { date: formatDate(campaign.abandonedAt), days: ABANDON_PERIOD_DAYS })}
+      </p>
+    );
+  }
+
+  const claim = async () => {
+    const success = await run(
+      "claim",
+      (signer) => claimRefund(signer, campaign.address),
+      t("abandoned.claimed", { amount: formatEth(accountInfo.refundable) }),
+    );
+    if (success) onClaimed?.();
+  };
+
+  return (
+    <div className="notice-rose mt-4 p-4">
+      <p className="text-sm font-semibold">
+        {campaign.isCancelled ? t("refund.cancelledTitle") : t("abandoned.title")}
+      </p>
+      <p className="mt-1 text-xs leading-relaxed">
+        {campaign.isCancelled
+          ? t("refund.cancelledDescription")
+          : t("abandoned.description", { days: ABANDON_PERIOD_DAYS })}
+      </p>
+      {accountInfo?.contributed > 0 &&
+        (accountInfo.refundClaimed ? (
+          <p className="text-accent mt-3 text-sm font-semibold">✓ {t("abandoned.alreadyClaimed")}</p>
+        ) : (
+          <button className="btn-primary mt-3 w-full" onClick={claim} disabled={isBusy || accountInfo.refundable <= 0}>
+            {isBusy ? t("tx.waiting") : t("abandoned.claim", { amount: formatEth(accountInfo.refundable) })}
+          </button>
+        ))}
+    </div>
+  );
+};
+
+/** Panel samping halaman detail: progres, ringkasan dana, donasi, dana terbengkalai, dan pengajuan penarikan */
+const DonationPanel = ({ campaign, accountInfo, onChanged }) => {
+  const { t } = useI18n();
+  const wallet = useWallet();
   const status = campaignStatus(campaign);
-  const isCreator = sameAddress(campaign.creator, account);
+  const isCreator = sameAddress(campaign.creator, wallet.account);
   // Donasi dibuka sampai deadline, walaupun target sudah tercapai
   const canContribute = isBeforeDeadline(campaign.deadline) && campaign.state !== "Expired";
   const remainingDays = daysLeft(campaign.deadline);
 
+  const renderDonation = () => {
+    if (!canContribute) {
+      return (
+        <p className="text-muted text-sm">
+          {campaign.isCancelled
+            ? t("donation.closedCancelled")
+            : campaign.closedEarly
+              ? t("donation.closedEarly")
+              : t("donation.closed")}
+        </p>
+      );
+    }
+    if (!wallet.account) {
+      return (
+        <button className="btn-primary w-full py-3 text-base" onClick={wallet.connect} disabled={wallet.isConnecting}>
+          <WalletIcon className="h-5 w-5" />
+          {wallet.isConnecting ? t("wallet.connecting") : t("donation.connectToDonate")}
+        </button>
+      );
+    }
+    if (isCreator)
+      return <p className="surface-muted text-muted rounded-xl p-3 text-sm">{t("donation.creatorNote")}</p>;
+    return <DonationForm campaign={campaign} onContributed={onChanged} />;
+  };
+
   return (
     <div className="card p-6">
       <div className="flex items-center justify-between">
-        <span className={`badge ${status.className}`}>{status.label}</span>
-        <span className="text-xs font-medium text-slate-500">
+        <span className={status.className}>{t(`status.${status.key}`)}</span>
+        <span className="text-muted text-xs font-medium">
           {!canContribute
-            ? `Berakhir ${formatDate(campaign.deadline)}`
+            ? t(campaign.closedEarly ? "campaign.closedOn" : "campaign.endedOn", {
+                date: formatDate(campaign.deadline),
+              })
             : remainingDays > 0
-              ? `${remainingDays} hari lagi`
-              : `${formatTimeLeft(campaign.deadline)} lagi`}
+              ? t("campaign.daysLeft", { days: remainingDays })
+              : t("campaign.timeLeft", { time: formatTimeLeft(campaign.deadline) })}
         </span>
       </div>
 
-      <p className="mt-5 text-3xl font-extrabold tracking-tight text-slate-900">{formatEth(campaign.raisedAmount)}</p>
-      <IdrValue eth={campaign.raisedAmount} className="block text-sm font-medium text-slate-500" />
-      <p className="text-sm text-slate-500">terkumpul dari target {formatEth(campaign.goalAmount)}</p>
+      <p className="text-strong mt-5 text-3xl font-extrabold tracking-tight">{formatEth(campaign.raisedAmount)}</p>
+      <IdrValue eth={campaign.raisedAmount} className="text-muted block text-sm font-medium" />
+      <p className="text-muted text-sm">{t("campaign.raisedOfTarget", { goal: formatEth(campaign.goalAmount) })}</p>
 
       <div className="progress-track mt-4 h-2.5">
         <div className="progress-bar" style={{ width: `${Math.min(campaign.progress, 100)}%` }} />
       </div>
-      <p className="mt-2 text-sm font-semibold text-emerald-600">{campaign.progress}% tercapai</p>
+      <p className="text-accent mt-2 text-sm font-semibold">{t("campaign.progress", { percent: campaign.progress })}</p>
 
       <FundSummary campaign={campaign} />
+      <RefundBox campaign={campaign} accountInfo={accountInfo} onClaimed={onChanged} />
 
-      <div className="mt-6 border-t border-slate-100 pt-6">
-        {!canContribute ? (
-          <p className="text-sm text-slate-500">
-            Kampanye ini sudah tidak menerima donasi. Donatur tetap dapat memberikan suara pada permintaan penarikan
-            dana.
-          </p>
-        ) : isCreator ? (
-          <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-500">
-            Kampanye ini milikmu. Pembuat kampanye tidak bisa berdonasi atau memberi suara di kampanyenya sendiri, agar
-            penarikan dana tetap diputuskan oleh donatur.
-          </p>
-        ) : (
-          <DonationForm campaign={campaign} onContributed={onChanged} />
-        )}
-      </div>
+      <div className="divider mt-6 border-t pt-6">{renderDonation()}</div>
 
-      {isCreator && (
-        <div className="mt-6 border-t border-slate-100 pt-6">
+      {isCreator && !campaign.isRefundOpen && (
+        <div className="divider mt-6 border-t pt-6">
           <WithdrawRequestForm campaign={campaign} onCreated={onChanged} />
         </div>
       )}
 
-      <div className="mt-6 flex items-start gap-3 rounded-xl bg-emerald-50 p-4 text-emerald-800">
+      <div className="notice-emerald mt-6 flex items-start gap-3 p-4">
         <ShieldIcon className="h-5 w-5 flex-shrink-0" />
-        <p className="text-xs leading-relaxed">
-          Dana disimpan di smart contract. Penggalang dana hanya bisa menarik dana setelah disetujui donatur.
-        </p>
+        <p className="text-xs leading-relaxed">{t("donation.safety")}</p>
       </div>
     </div>
   );

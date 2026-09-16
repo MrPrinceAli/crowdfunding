@@ -1,21 +1,29 @@
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useTransaction } from "../../hooks/useTransaction";
+import { CATEGORIES } from "../../lib/campaign";
 import { createCampaign } from "../../lib/contracts";
 import { toastError } from "../../lib/toast";
 import { refreshCampaign } from "../../store/campaigns";
-import { selectAccount, selectWeb3 } from "../../store/wallet";
+import { useI18n } from "../providers/PreferencesProvider";
+import { CategoryField, DescriptionField, ImageField, isValidImageUrl, LocationField } from "./CampaignFields";
 
-const EMPTY_FORM = { title: "", description: "", goalAmount: "", minContribution: "", deadline: "" };
-
-/** "YYYY-MM-DD" untuk besok (batas minimum input tanggal) */
-const tomorrow = () => {
-  const date = new Date(Date.now() + 86400000);
-  return date.toISOString().slice(0, 10);
+const EMPTY_FORM = {
+  title: "",
+  description: "",
+  category: CATEGORIES[0],
+  location: "",
+  imageUrl: "",
+  goalAmount: "",
+  minContribution: "",
+  deadline: "",
 };
 
+/** "YYYY-MM-DD" untuk besok (batas minimum input tanggal) */
+const tomorrow = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+
 /** Deadline berlaku sampai akhir hari yang dipilih, dalam detik (sesuai block.timestamp) */
-const endOfDayInSeconds = (dateString) => Math.floor(new Date(`${dateString}T23:59:59`).getTime() / 1000);
+export const endOfDayInSeconds = (dateString) => Math.floor(new Date(`${dateString}T23:59:59`).getTime() / 1000);
 
 const EthInput = ({ id, label, value, onChange, placeholder }) => (
   <div>
@@ -34,15 +42,14 @@ const EthInput = ({ id, label, value, onChange, placeholder }) => (
         onChange={onChange}
         required
       />
-      <span className="absolute inset-y-0 right-4 flex items-center text-sm font-semibold text-slate-400">ETH</span>
+      <span className="text-faint absolute inset-y-0 right-4 flex items-center text-sm font-semibold">ETH</span>
     </div>
   </div>
 );
 
 const CampaignForm = ({ onCreated }) => {
+  const { t } = useI18n();
   const dispatch = useDispatch();
-  const web3 = useSelector(selectWeb3);
-  const account = useSelector(selectAccount);
   const { run, isBusy } = useTransaction();
   const [form, setForm] = useState(EMPTY_FORM);
 
@@ -53,26 +60,21 @@ const CampaignForm = ({ onCreated }) => {
     const goalAmount = Number(form.goalAmount);
     const minContribution = Number(form.minContribution);
 
-    if (goalAmount <= 0 || minContribution <= 0) {
-      toastError("Target dana dan donasi minimum harus lebih dari 0");
-      return;
-    }
-    if (minContribution > goalAmount) {
-      toastError("Donasi minimum tidak boleh melebihi target dana");
-      return;
-    }
+    if (goalAmount <= 0 || minContribution <= 0) return toastError(t("form.errorPositive"));
+    if (minContribution > goalAmount) return toastError(t("form.errorMinAboveGoal"));
+    if (!isValidImageUrl(form.imageUrl.trim())) return toastError(t("form.errorImageUrl"));
 
     const address = await run(
       "create",
-      () =>
-        createCampaign(web3, account, {
-          title: form.title,
-          description: form.description,
-          goalAmount: form.goalAmount,
-          minContribution: form.minContribution,
+      (signer) =>
+        createCampaign(signer, {
+          ...form,
+          title: form.title.trim(),
+          description: form.description.trim(),
+          imageUrl: form.imageUrl.trim(),
           deadline: endOfDayInSeconds(form.deadline),
         }),
-      "Kampanye berhasil dibuat 🎉",
+      t("form.created"),
     );
 
     if (address) {
@@ -80,49 +82,42 @@ const CampaignForm = ({ onCreated }) => {
       setForm(EMPTY_FORM);
       onCreated?.(address);
     }
+    return undefined;
   };
 
   return (
     <form onSubmit={submit} className="space-y-4">
       <div>
         <label className="label" htmlFor="title">
-          Judul kampanye
+          {t("form.title")}
         </label>
         <input
           id="title"
           type="text"
-          placeholder="Contoh: Bantu renovasi sekolah di desa"
+          maxLength={120}
+          placeholder={t("form.titlePlaceholder")}
           className="input"
           value={form.title}
           onChange={update("title")}
           required
         />
       </div>
-      <div>
-        <label className="label" htmlFor="description">
-          Cerita kampanye
-        </label>
-        <textarea
-          id="description"
-          rows={4}
-          placeholder="Ceritakan tujuan penggalangan dana dan bagaimana dana akan digunakan"
-          className="input resize-none"
-          value={form.description}
-          onChange={update("description")}
-          required
-        />
+      <DescriptionField value={form.description} onChange={update("description")} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <CategoryField value={form.category} onChange={update("category")} />
+        <LocationField value={form.location} onChange={update("location")} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <EthInput
           id="goal"
-          label="Target dana"
+          label={t("form.goal")}
           placeholder="10"
           value={form.goalAmount}
           onChange={update("goalAmount")}
         />
         <EthInput
           id="minimum"
-          label="Donasi minimum"
+          label={t("form.minimum")}
           placeholder="0.1"
           value={form.minContribution}
           onChange={update("minContribution")}
@@ -130,7 +125,7 @@ const CampaignForm = ({ onCreated }) => {
       </div>
       <div>
         <label className="label" htmlFor="deadline">
-          Batas waktu
+          {t("form.deadline")}
         </label>
         <input
           id="deadline"
@@ -142,9 +137,10 @@ const CampaignForm = ({ onCreated }) => {
           required
         />
       </div>
+      <ImageField value={form.imageUrl} onChange={update("imageUrl")} />
 
       <button className="btn-primary w-full py-3" disabled={isBusy}>
-        {isBusy ? "Menunggu konfirmasi MetaMask..." : "Mulai Galang Dana"}
+        {isBusy ? t("tx.waitingMetaMask") : t("form.submit")}
       </button>
     </form>
   );
