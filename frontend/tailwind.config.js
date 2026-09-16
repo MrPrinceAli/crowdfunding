@@ -2,7 +2,9 @@ const defaultTheme = require("tailwindcss/defaultTheme");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./pages/**/*.js", "./components/**/*.js", "./lib/**/*.js"],
+  // Mode gelap diaktifkan lewat class "dark" di <html> (lihat lib/preferences.js)
+  darkMode: "class",
+  content: ["./pages/**/*.js", "./components/**/*.js", "./lib/**/*.js", "./hooks/**/*.js"],
   theme: {
     extend: {
       fontFamily: {

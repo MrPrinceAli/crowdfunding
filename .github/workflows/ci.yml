@@ -21,6 +21,25 @@ jobs:
           cache-dependency-path: smart-contract/package-lock.json
       - run: npm ci
       - run: npm test
+      - run: npm run coverage
+
+  slither:
+    name: Smart contract security (Slither)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: smart-contract/package-lock.json
+      - run: npm ci
+        working-directory: smart-contract
+      - uses: crytic/slither-action@v0.4.1
+        with:
+          target: smart-contract
+          slither-config: smart-contract/slither.config.json
+          fail-on: medium
 
   frontend:
     name: Frontend (lint, test, build)
