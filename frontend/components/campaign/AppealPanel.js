@@ -3,14 +3,12 @@ import { useBlockRefresh } from "../../hooks/useBlockRefresh";
 import { useNow } from "../../hooks/useNow";
 import { useTransaction } from "../../hooks/useTransaction";
 import { useWallet } from "../../hooks/useWallet";
-import { appealDeadline, APPEAL_PERIOD_DAYS } from "../../lib/campaign";
+import { appealDeadline, APPEAL_PERIOD_DAYS, MAX_TEXT_LENGTH } from "../../lib/campaign";
 import { appealTakedown, loadAppeal, resolveAppeal } from "../../lib/contracts";
 import { formatDate, formatDateTime, sameAddress } from "../../lib/format";
 import { toastError } from "../../lib/toast";
 import { useI18n } from "../providers/PreferencesProvider";
 import Modal from "../ui/Modal";
-
-const MAX_TEXT_LENGTH = 1000;
 
 /** Form teks wajib untuk mengajukan banding (penggalang dana) atau memberi keputusan (admin) */
 const TextForm = ({ id, label, placeholder, note, submitLabel, submitClass = "btn-primary", onSubmit }) => {

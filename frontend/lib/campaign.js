@@ -1,12 +1,24 @@
+import RULES from "./abi/rules.json";
 import { nowInSeconds } from "./format";
 
-// Harus sama dengan enum & konstanta di smart-contract/contracts/Project.sol
+// Urutan enum harus sama dengan Project.sol; angka aturan di-generate dari Solidity
+// ke lib/abi/rules.json oleh `npm run compile` (lihat smart-contract/scripts/export-abi.js)
 export const CAMPAIGN_STATE = ["Fundraising", "Expired", "Successful"];
 export const REQUEST_STATUS = ["Voting", "Approved", "Rejected", "Completed", "Cancelled"];
 export const VOTE = { None: 0, Approve: 1, Reject: 2 };
-export const VOTING_PERIOD_DAYS = 3;
-export const QUORUM_PERCENT = 20;
-export const ABANDON_PERIOD_DAYS = 30;
+
+const DAY = 86400;
+
+export const VOTING_PERIOD_DAYS = RULES.VOTING_PERIOD / DAY;
+export const QUORUM_PERCENT = RULES.QUORUM_PERCENT;
+export const ABANDON_PERIOD_DAYS = RULES.ABANDON_PERIOD / DAY;
+export const MAX_EXTENSION_DAYS = RULES.MAX_EXTENSION / DAY;
+export const APPEAL_PERIOD_DAYS = RULES.APPEAL_PERIOD / DAY;
+export const MAX_MESSAGE_LENGTH = RULES.MAX_MESSAGE_LENGTH;
+export const MAX_TITLE_LENGTH = RULES.MAX_TITLE_LENGTH;
+export const MAX_TEXT_LENGTH = RULES.MAX_TEXT_LENGTH;
+export const MAX_URL_LENGTH = RULES.MAX_URL_LENGTH;
+export const MAX_NAME_BYTES = RULES.MAX_NAME_LENGTH;
 
 /** Nilai kategori yang disimpan di contract (tetap Bahasa Indonesia); label tampilan lewat t("category.<nilai>") */
 export const CATEGORIES = ["Pendidikan", "Kesehatan", "Bencana Alam", "Lingkungan", "Sosial", "Lainnya"];
@@ -58,15 +70,11 @@ export const PROVINCES = [
   "Luar Negeri",
 ];
 
-/** Harus sama dengan enum AppealStatus & APPEAL_PERIOD di Crowdfunding.sol */
+/** Harus sama dengan enum AppealStatus di Crowdfunding.sol */
 export const APPEAL_STATUS = ["None", "Pending", "Accepted", "Rejected"];
-export const APPEAL_PERIOD_DAYS = 14;
 
 /** Pengingat untuk kampanye favorit yang akan berakhir dalam sekian hari */
 export const REMINDER_DAYS = 3;
-
-export const MAX_EXTENSION_DAYS = 30;
-export const MAX_MESSAGE_LENGTH = 280;
 
 export const SORT_OPTIONS = ["newest", "ending", "raised", "progress"];
 
@@ -89,11 +97,11 @@ export const coverGradient = (address = "") => {
 
 /** Batas akhir pengajuan banding (detik); 0 jika kampanye tidak di-takedown */
 export const appealDeadline = (campaign) =>
-  campaign.takenDownAt ? campaign.takenDownAt + APPEAL_PERIOD_DAYS * 86400 : 0;
+  campaign.takenDownAt ? campaign.takenDownAt + APPEAL_PERIOD_DAYS * DAY : 0;
 
 export const isBeforeDeadline = (deadline, now = nowInSeconds()) => now < deadline;
 
-export const daysLeft = (deadline, now = nowInSeconds()) => Math.max(0, Math.floor((deadline - now) / 86400));
+export const daysLeft = (deadline, now = nowInSeconds()) => Math.max(0, Math.floor((deadline - now) / DAY));
 
 export const campaignStatus = (campaign, now = nowInSeconds()) => {
   if (campaign.isTakenDown) return { key: "takenDown", className: "badge-rose" };

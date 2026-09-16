@@ -4,7 +4,7 @@ import { cancelCampaign, takedownCampaign } from "../../lib/contracts";
 import { toastError } from "../../lib/toast";
 import { useI18n } from "../providers/PreferencesProvider";
 
-const MAX_REASON_LENGTH = 1000;
+import { MAX_TEXT_LENGTH } from "../../lib/campaign";
 
 /**
  * Form pembatalan kampanye dengan alasan wajib (tersimpan publik di blockchain).
@@ -39,7 +39,7 @@ const CancelForm = ({ campaign, mode, onDone }) => {
         <textarea
           id={`${prefix}-reason`}
           rows={4}
-          maxLength={MAX_REASON_LENGTH}
+          maxLength={MAX_TEXT_LENGTH}
           className="input resize-none"
           placeholder={t(`${prefix}.reasonPlaceholder`)}
           value={reason}

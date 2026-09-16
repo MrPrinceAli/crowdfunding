@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTransaction } from "../../hooks/useTransaction";
 import { useWallet } from "../../hooks/useWallet";
+import { MAX_TEXT_LENGTH } from "../../lib/campaign";
 import { reportCampaign, setCampaignVerified } from "../../lib/contracts";
 import { formatDate, sameAddress } from "../../lib/format";
 import { toastError } from "../../lib/toast";
@@ -60,7 +61,7 @@ const ReportForm = ({ campaignAddress, onReported }) => {
         <textarea
           id="report-detail"
           rows={3}
-          maxLength={800}
+          maxLength={MAX_TEXT_LENGTH}
           className="input resize-none"
           value={detail}
           onChange={(event) => setDetail(event.target.value)}

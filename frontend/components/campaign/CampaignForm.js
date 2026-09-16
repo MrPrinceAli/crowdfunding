@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useTransaction } from "../../hooks/useTransaction";
-import { CATEGORIES } from "../../lib/campaign";
+import { CATEGORIES, MAX_TITLE_LENGTH } from "../../lib/campaign";
 import { createCampaign } from "../../lib/contracts";
 import { toastError } from "../../lib/toast";
 import { refreshCampaign } from "../../store/campaigns";
@@ -94,7 +94,7 @@ const CampaignForm = ({ onCreated }) => {
         <input
           id="title"
           type="text"
-          maxLength={120}
+          maxLength={MAX_TITLE_LENGTH}
           placeholder={t("form.titlePlaceholder")}
           className="input"
           value={form.title}

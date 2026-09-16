@@ -229,7 +229,7 @@ const en = {
   "updates.empty": "The fundraiser hasn't shared any updates yet.",
   "updates.formLabel": "Share an update with donors",
   "updates.placeholder": "E.g. Phase 1 of the well is complete, here are the details...",
-  "updates.permanent": "{count}/1000 · stored permanently on the blockchain",
+  "updates.permanent": "{count}/{max} · stored permanently on the blockchain",
   "updates.submit": "Post update",
   "updates.posted": "Update posted",
   "updates.errorEmpty": "Write the update you want to share with donors",

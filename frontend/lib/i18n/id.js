@@ -233,7 +233,7 @@ const id = {
   "updates.empty": "Penggalang dana belum membagikan kabar.",
   "updates.formLabel": "Bagikan kabar ke donatur",
   "updates.placeholder": "Contoh: Pembangunan sumur tahap 1 sudah selesai, berikut rinciannya...",
-  "updates.permanent": "{count}/1000 · tersimpan permanen di blockchain",
+  "updates.permanent": "{count}/{max} · tersimpan permanen di blockchain",
   "updates.submit": "Kirim kabar",
   "updates.posted": "Kabar terbaru berhasil dibagikan",
   "updates.errorEmpty": "Tulis kabar yang ingin dibagikan ke donatur",

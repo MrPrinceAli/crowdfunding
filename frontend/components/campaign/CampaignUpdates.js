@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTransaction } from "../../hooks/useTransaction";
+import { MAX_TEXT_LENGTH } from "../../lib/campaign";
 import { postUpdate } from "../../lib/contracts";
 import { formatDate } from "../../lib/format";
 import { toastError } from "../../lib/toast";
@@ -35,7 +36,7 @@ const UpdateForm = ({ campaignAddress, onPosted }) => {
       <textarea
         id="update-message"
         rows={3}
-        maxLength={1000}
+        maxLength={MAX_TEXT_LENGTH}
         className="input resize-none"
         placeholder={t("updates.placeholder")}
         value={message}
@@ -43,7 +44,9 @@ const UpdateForm = ({ campaignAddress, onPosted }) => {
         disabled={isBusy}
       />
       <div className="mt-2 flex items-center justify-between gap-3">
-        <span className="text-faint text-xs">{t("updates.permanent", { count: message.length })}</span>
+        <span className="text-faint text-xs">
+          {t("updates.permanent", { count: message.length, max: MAX_TEXT_LENGTH })}
+        </span>
         <button className="btn-primary py-2" disabled={isBusy}>
           {isBusy ? t("tx.waiting") : t("updates.submit")}
         </button>

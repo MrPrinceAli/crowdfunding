@@ -1,14 +1,15 @@
 import { toUtf8Bytes } from "ethers";
 import { useState } from "react";
 import { useTransaction } from "../../hooks/useTransaction";
+import { MAX_NAME_BYTES } from "../../lib/campaign";
 import { setDisplayName } from "../../lib/contracts";
 import { toastError } from "../../lib/toast";
 import { useIdentity } from "../providers/IdentityProvider";
 import { useI18n } from "../providers/PreferencesProvider";
 
-export const MAX_NAME_BYTES = 32;
-
 /** Panjang dalam byte UTF-8 (batas di contract dihitung per byte, emoji = 4 byte) */
+export { MAX_NAME_BYTES };
+
 export const byteLength = (text) => toUtf8Bytes(text).length;
 
 /** Form mengubah nama tampilan akun sendiri (tersimpan di contract Crowdfunding) */

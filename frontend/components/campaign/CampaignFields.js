@@ -1,4 +1,4 @@
-import { CATEGORIES, PROVINCES } from "../../lib/campaign";
+import { CATEGORIES, MAX_TEXT_LENGTH, MAX_URL_LENGTH, PROVINCES } from "../../lib/campaign";
 import { useI18n } from "../providers/PreferencesProvider";
 import CampaignCover from "./CampaignCover";
 
@@ -15,7 +15,7 @@ export const DescriptionField = ({ value, onChange }) => {
       <textarea
         id="description"
         rows={4}
-        maxLength={1000}
+        maxLength={MAX_TEXT_LENGTH}
         placeholder={t("form.descriptionPlaceholder")}
         className="input resize-none"
         value={value}
@@ -75,7 +75,7 @@ export const ImageField = ({ value, onChange }) => {
       <input
         id="image"
         type="url"
-        maxLength={500}
+        maxLength={MAX_URL_LENGTH}
         placeholder="https://..."
         className="input"
         value={value}
