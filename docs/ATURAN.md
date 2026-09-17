@@ -1,4 +1,4 @@
-# Aturan platform
+# Aturan platform Himpun
 
 Dokumen ini merinci aturan yang dijalankan smart contract. Ringkasan alurnya ada di [README](../README.md).
 

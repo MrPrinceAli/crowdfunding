@@ -47,7 +47,7 @@ const en = {
   "pagination.next": "Next",
 
   // Landing
-  "landing.pageTitle": "Crowdfunding — Transparent fundraising",
+  "landing.pageTitle": "Himpun — Transparent fundraising",
   "landing.subtitle":
     "Raise funds for your ideas and social causes, or support other people's campaigns. Every donation is recorded on the blockchain and every withdrawal is overseen by the donors.",
   "landing.connectMetaMask": "Connect MetaMask",
@@ -96,7 +96,7 @@ const en = {
   "favorite.remove": "Remove from favorites",
 
   // Dashboard
-  "dashboard.pageTitle": "Explore Campaigns — Crowdfunding",
+  "dashboard.pageTitle": "Explore Campaigns — Himpun",
   "dashboard.title": "Explore campaigns",
   "dashboard.subtitle": "Support the ideas and social causes you care about, or start your own fundraiser.",
   "dashboard.create": "Create Campaign",
@@ -352,7 +352,7 @@ const en = {
   "share.message": 'Help support the campaign "{title}"',
 
   // My contributions
-  "contributions.pageTitle": "My Contributions — Crowdfunding",
+  "contributions.pageTitle": "My Contributions — Himpun",
   "contributions.title": "My contributions",
   "contributions.statDonations": "Donations made",
   "contributions.statCampaigns": "My campaigns",
@@ -369,7 +369,7 @@ const en = {
   "contributions.noCampaignsText": "You haven't created a fundraiser yet.",
 
   // Fundraiser profile & stats
-  "creatorStats.pageTitle": "Fundraiser {address} — Crowdfunding",
+  "creatorStats.pageTitle": "Fundraiser {address} — Himpun",
   "creatorStats.allCampaigns": "All campaigns",
   "creatorStats.fundraiser": "Fundraiser",
   "creatorStats.itsYou": "This is you",
@@ -395,7 +395,7 @@ const en = {
   "creatorStats.emptyText": "This address hasn't created any fundraisers yet.",
 
   // Admin
-  "admin.pageTitle": "Admin — Crowdfunding",
+  "admin.pageTitle": "Admin — Himpun",
   "admin.title": "Admin panel",
   "admin.subtitle": "Review reported campaigns and manage verified badges.",
   "admin.onlyAdminTitle": "Admins only",
@@ -522,7 +522,7 @@ const en = {
   "notification.campaignCancelled": "Campaign cancelled; refunds are open",
 
   // Platform stats
-  "stats.pageTitle": "Platform Stats — Crowdfunding",
+  "stats.pageTitle": "Platform Stats — Himpun",
   "stats.title": "Platform stats",
   "stats.subtitle": "An overview of all fundraising, calculated straight from the blockchain.",
   "stats.campaigns": "Campaigns",

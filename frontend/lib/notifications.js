@@ -3,8 +3,8 @@ import { loadActivity, loadMyContributions } from "./contracts";
 import { nowInSeconds, sameAddress } from "./format";
 
 export const NOTIFICATION_LIMIT = 30;
-const SEEN_KEY = "crowdfunding-notifications-seen";
-const DISMISSED_KEY = "crowdfunding-reminders-dismissed";
+const SEEN_KEY = "himpun-notifications-seen";
+const DISMISSED_KEY = "himpun-reminders-dismissed";
 
 /**
  * Jenis aktivitas yang dikirim sebagai notifikasi, per peran akun terhadap kampanye:

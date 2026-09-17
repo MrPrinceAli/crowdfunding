@@ -1,5 +1,5 @@
 {
-  "name": "crowdfunding-dapp",
+  "name": "himpun",
   "private": true,
   "description": "Platform galang dana berbasis smart contract Ethereum (monorepo: smart-contract + frontend)",
   "scripts": {

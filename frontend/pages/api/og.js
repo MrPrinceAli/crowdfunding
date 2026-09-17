@@ -8,7 +8,7 @@ const HEIGHT = 630;
 /** Gambar pratinjau link kampanye (1200×630) untuk WhatsApp, X, Facebook, dll */
 export default function handler(request) {
   const { searchParams } = new URL(request.url);
-  const title = (searchParams.get("title") || "Crowdfunding").slice(0, 110);
+  const title = (searchParams.get("title") || "Himpun").slice(0, 110);
   const category = searchParams.get("category") || "";
   const raised = searchParams.get("raised") || "0";
   const goal = searchParams.get("goal") || "0";
@@ -57,7 +57,7 @@ export default function handler(request) {
           </svg>
         </div>
         <div style={{ fontSize: 34, fontWeight: 800, display: "flex" }}>
-          Crowd<span style={{ color: "#059669" }}>funding</span>
+          Him<span style={{ color: "#059669" }}>pun</span>
         </div>
         {category && (
           <div

@@ -49,7 +49,7 @@ const id = {
   "pagination.next": "Berikutnya",
 
   // Landing
-  "landing.pageTitle": "Crowdfunding — Galang dana transparan",
+  "landing.pageTitle": "Himpun — Galang dana transparan",
   "landing.subtitle":
     "Galang dana untuk ide dan aksi sosialmu, atau dukung kampanye orang lain. Setiap donasi tercatat di blockchain dan penarikannya diawasi langsung oleh para donatur.",
   "landing.connectMetaMask": "Hubungkan MetaMask",
@@ -98,7 +98,7 @@ const id = {
   "favorite.remove": "Hapus dari favorit",
 
   // Dashboard
-  "dashboard.pageTitle": "Jelajahi Kampanye — Crowdfunding",
+  "dashboard.pageTitle": "Jelajahi Kampanye — Himpun",
   "dashboard.title": "Jelajahi kampanye",
   "dashboard.subtitle": "Dukung ide dan aksi sosial yang kamu pedulikan, atau mulai penggalangan danamu sendiri.",
   "dashboard.create": "Buat Kampanye",
@@ -354,7 +354,7 @@ const id = {
   "share.message": 'Yuk bantu kampanye "{title}"',
 
   // Kontribusi saya
-  "contributions.pageTitle": "Kontribusi Saya — Crowdfunding",
+  "contributions.pageTitle": "Kontribusi Saya — Himpun",
   "contributions.title": "Kontribusi saya",
   "contributions.statDonations": "Donasi diberikan",
   "contributions.statCampaigns": "Kampanye saya",
@@ -371,7 +371,7 @@ const id = {
   "contributions.noCampaignsText": "Kamu belum membuat kampanye penggalangan dana.",
 
   // Profil & statistik penggalang dana
-  "creatorStats.pageTitle": "Penggalang dana {address} — Crowdfunding",
+  "creatorStats.pageTitle": "Penggalang dana {address} — Himpun",
   "creatorStats.allCampaigns": "Semua kampanye",
   "creatorStats.fundraiser": "Penggalang dana",
   "creatorStats.itsYou": "Ini kamu",
@@ -395,7 +395,7 @@ const id = {
   "creatorStats.emptyText": "Alamat ini belum pernah membuat kampanye penggalangan dana.",
 
   // Admin
-  "admin.pageTitle": "Admin — Crowdfunding",
+  "admin.pageTitle": "Admin — Himpun",
   "admin.title": "Panel admin",
   "admin.subtitle": "Tinjau kampanye yang dilaporkan dan kelola badge terverifikasi.",
   "admin.onlyAdminTitle": "Khusus admin",
@@ -520,7 +520,7 @@ const id = {
   "notification.campaignCancelled": "Kampanye dibatalkan, refund dibuka",
 
   // Statistik platform
-  "stats.pageTitle": "Statistik Platform — Crowdfunding",
+  "stats.pageTitle": "Statistik Platform — Himpun",
   "stats.title": "Statistik platform",
   "stats.subtitle": "Gambaran seluruh penggalangan dana, dihitung langsung dari blockchain.",
   "stats.campaigns": "Kampanye",

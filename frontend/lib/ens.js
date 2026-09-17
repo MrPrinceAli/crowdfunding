@@ -2,7 +2,7 @@ import { JsonRpcProvider } from "ethers";
 import { ENS_RPC_URL } from "./config";
 
 // Nama ENS hanya ada di Ethereum mainnet, jadi dibaca lewat RPC mainnet terpisah dari jaringan aplikasi
-const CACHE_KEY = "crowdfunding-ens";
+const CACHE_KEY = "himpun-ens";
 const TIMEOUT_MS = 5000;
 
 let provider;

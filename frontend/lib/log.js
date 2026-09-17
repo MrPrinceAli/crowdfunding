@@ -8,7 +8,7 @@
  */
 export const reportError = (context, error) => {
   // eslint-disable-next-line no-console
-  console.error(`[crowdfunding] ${context}:`, error);
+  console.error(`[himpun] ${context}:`, error);
 };
 
 /** Versi siap pakai untuk .catch(): `.catch(onError("Memuat notifikasi"))` */

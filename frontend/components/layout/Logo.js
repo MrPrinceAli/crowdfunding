@@ -7,7 +7,7 @@ const Logo = ({ href = "/dashboard" }) => (
       <HandsIcon className="h-5 w-5" />
     </span>
     <span className="text-strong text-lg font-extrabold tracking-tight">
-      Crowd<span className="text-accent">funding</span>
+      Him<span className="text-accent">pun</span>
     </span>
   </Link>
 );

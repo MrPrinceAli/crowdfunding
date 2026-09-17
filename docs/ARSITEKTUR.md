@@ -1,4 +1,4 @@
-# Arsitektur
+# Arsitektur Himpun
 
 Dokumen singkat tentang cara kerja kode. Untuk aturan platform, lihat [ATURAN.md](ATURAN.md).
 

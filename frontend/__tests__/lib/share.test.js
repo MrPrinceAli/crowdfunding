@@ -3,9 +3,7 @@ import { campaignUrl, shareLinks } from "../../lib/share";
 
 describe("share", () => {
   test("campaignUrl memakai APP_URL jika ada", () => {
-    expect(campaignUrl("0xabc", "https://crowdfunding.example")).toBe(
-      "https://crowdfunding.example/project-details/0xabc",
-    );
+    expect(campaignUrl("0xabc", "https://himpun.example")).toBe("https://himpun.example/project-details/0xabc");
   });
 
   test("shareLinks meng-encode judul dan URL", () => {

@@ -268,7 +268,7 @@ const Home = () => {
         <div className="l-muted mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm sm:flex-row sm:px-6 lg:px-8">
           <span className="flex items-center gap-2 font-semibold" style={{ color: "var(--l-ink)" }}>
             <HandsIcon className="l-accent h-4 w-4" />
-            Crowdfunding
+            Himpun
           </span>
           <p>{t("footer.tagline")}</p>
         </div>

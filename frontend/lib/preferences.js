@@ -3,8 +3,8 @@
 export const LOCALES = ["id", "en"];
 export const THEMES = ["system", "light", "dark"];
 
-const LOCALE_KEY = "crowdfunding-locale";
-const THEME_KEY = "crowdfunding-theme";
+const LOCALE_KEY = "himpun-locale";
+const THEME_KEY = "himpun-theme";
 
 const read = (key, allowed, fallback) => {
   try {

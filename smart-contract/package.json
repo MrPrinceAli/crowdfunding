@@ -1,7 +1,7 @@
 {
-  "name": "crowdfunding-smart-contract",
+  "name": "himpun-smart-contract",
   "version": "1.0.0",
-  "description": "Smart contract crowdfunding keep-it-all dengan voting penarikan dana",
+  "description": "Smart contract Himpun: galang dana keep-it-all dengan voting penarikan dana",
   "scripts": {
     "node": "hardhat node",
     "compile": "hardhat compile && node scripts/export-abi.js",

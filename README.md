@@ -1,202 +1,204 @@
-# Crowdfunding DApp
+# Himpun
 
-Platform galang dana berbasis smart contract Ethereum. Donasi disimpan di contract, dan setiap penarikan dana oleh penggalang dana harus disetujui donatur melalui voting.
+Transparent fundraising on Ethereum. Donations are held by a smart contract, and every withdrawal by the fundraiser must be approved by the donors through an on-chain vote.
 
-## Daftar isi
+> _Himpun_ is Indonesian for "to gather" — money gathered together, and decisions made together.
 
-- [Struktur proyek](#struktur-proyek)
-- [Fitur](#fitur)
-- [Aturan platform](#aturan-platform)
-- [Prasyarat](#prasyarat)
-- [Menjalankan di komputer lokal](#menjalankan-di-komputer-lokal)
-- [Setting MetaMask](#setting-metamask)
-- [Konfigurasi frontend](#konfigurasi-frontend-frontendenvlocal)
-- [Perintah](#perintah)
-- [Continuous Integration](#continuous-integration)
+## Table of contents
+
+- [Project structure](#project-structure)
+- [Features](#features)
+- [Platform rules](#platform-rules)
+- [Requirements](#requirements)
+- [Running locally](#running-locally)
+- [MetaMask setup](#metamask-setup)
+- [Frontend configuration](#frontend-configuration-frontendenvlocal)
+- [Commands](#commands)
+- [Continuous integration](#continuous-integration)
 - [Troubleshooting](#troubleshooting)
-- Dokumen terpisah: [Aturan platform lengkap](docs/ATURAN.md) · [Arsitektur](docs/ARSITEKTUR.md)
+- Separate documents (written in Indonesian): [platform rules in detail](docs/ATURAN.md) · [architecture](docs/ARSITEKTUR.md)
 
-## Struktur proyek
+## Project structure
 
 ```
 .
 ├── smart-contract/          Solidity 0.8.24 + Hardhat
-│   ├── contracts/           Crowdfunding.sol (registry & moderasi), Project.sol (satu kampanye)
-│   ├── scripts/             deploy.js, seed.js (data demo)
-│   └── test/                Unit test contract
+│   ├── contracts/           Crowdfunding.sol (registry & moderation), Project.sol (one campaign)
+│   ├── scripts/             deploy.js, seed.js (demo data), export-abi.js
+│   └── test/                Contract unit tests
 ├── frontend/                Next.js 15 + React 18 + Tailwind + Redux + ethers v6
 │   ├── pages/               /, /dashboard, /stats, /admin, /my-contributions, /project-details/[id], /creators/[address]
 │   ├── components/          layout/, ui/, campaign/, withdraw/, charts/, landing/, profile/, providers/
-│   ├── lib/                 config, format, campaign (aturan), chain/ (akses blockchain), i18n/, abi/, ...
+│   ├── lib/                 config, format, campaign (rules), chain/ (blockchain access), i18n/, abi/, ...
 │   ├── hooks/               useWallet, useTransaction, useBlockRefresh, useNow, useScrollMotion
-│   ├── store/               Redux: dompet, blok terbaru & daftar kampanye
-│   └── __tests__/           Unit test frontend (Jest + Testing Library)
-├── docs/                    ATURAN.md (aturan platform), ARSITEKTUR.md (cara kerja kode)
-└── .github/workflows/ci.yml Test, coverage, Slither, lint, build, dan cek format otomatis
+│   ├── store/               Redux: wallet, latest block & campaign list
+│   └── __tests__/           Frontend unit tests (Jest + Testing Library)
+├── docs/                    ATURAN.md (platform rules), ARSITEKTUR.md (how the code works)
+└── .github/workflows/ci.yml Tests, coverage, Slither, lint, build, and format check
 ```
 
-## Fitur
+## Features
 
-- **Kampanye**: kategori, gambar cover (link URL), cerita, target, donasi minimum, dan batas waktu
-- **Jelajahi**: filter status & kategori, pencarian, urutan (terbaru, hampir berakhir, dana terbanyak, progres), pagination
-- **Donasi** dengan pesan dukungan (maks. 280 karakter), perkiraan nilai Rupiah, dan riwayat donasi
-- **Donatur teratas** (🥇🥈🥉), **grafik perkembangan donasi**, dan **riwayat aktivitas** lengkap per kampanye
-- **Favorit**: simpan kampanye dengan tombol ♥ (tersimpan di browser), lalu filter _Favorit_ di halaman jelajahi
-- **Lokasi kampanye**: 38 provinsi (plus Nasional/Online & Luar Negeri) dengan filter provinsi di halaman jelajahi
-- **Pencarian** berdasarkan judul, cerita, nama profil/ENS penggalang dana, atau alamat dompet
-- **Kelola kampanye**: edit cerita, gambar, kategori, dan provinsi (dengan **riwayat edit** sebelum/sesudah); perpanjang deadline satu kali; tutup donasi lebih awal; batalkan kampanye
-- **Voting penarikan dana** (setuju/tolak) dengan progres suara, batas waktu, dan kuorum
-- **Kabar terbaru** dari penggalang dana, tersimpan permanen di blockchain
-- **Transparansi dana**: terkumpul / sudah ditarik / tersisa, bukti transaksi penarikan
-- **Dana terbengkalai**: donatur bisa menarik kembali sisa dana jika penggalang dana tidak aktif
-- **Moderasi**: laporan kampanye mencurigakan (publik), badge _Terverifikasi_, dan **takedown** kampanye oleh admin
-- **Notifikasi** (ikon lonceng): donasi & voting di kampanyemu, permintaan penarikan & kabar dari kampanye yang kamu dukung atau favoritkan, keputusan banding, dan **pengingat** kampanye favorit yang berakhir ≤ 3 hari lagi
-- **Nama profil & ENS**: alamat dompet ditampilkan sebagai nama profil (disimpan di contract) atau nama ENS
-- **Statistik platform** (`/stats`): total dana, donatur unik, donasi per hari, dana per kategori, kampanye & donatur teratas
-- **Profil & statistik penggalang dana** (`/creators/<alamat>`): total dana, donatur unik, grafik donasi per hari
-- **Panel admin** (`/admin`): kampanye yang dilaporkan, antrean verifikasi, dan daftar terverifikasi
-- **Tombol bagikan** (salin link, WhatsApp, X, Telegram, Facebook) dengan **preview link** (judul, deskripsi, dan gambar progres otomatis via `/api/og`)
-- **Bahasa Indonesia / English** dan **mode gelap**: toggle di navbar, pilihan tersimpan di browser
-- **Real-time**: data diperbarui otomatis setiap ada transaksi baru, tanpa refresh
-- **Status koneksi**: tombol hubungkan dompet, peringatan jaringan salah, dan pesan jika blockchain tidak bisa dihubungi
+- **Campaigns**: category, cover image (URL), story, goal, minimum donation, province, and deadline
+- **Explore**: filter by status, category and province, search, sorting (newest, ending soon, most raised, progress), pagination
+- **Donations** with a support message (max. 280 characters), an Indonesian Rupiah estimate, and donation history
+- **Top donors** (🥇🥈🥉), a **donation progress chart**, and a full **activity history** per campaign
+- **Favorites**: save campaigns with the ♥ button (stored in the browser), then filter by _Favorites_
+- **Search** by title, story, fundraiser profile/ENS name, or wallet address
+- **Campaign management**: edit story, image, category and province (with a before/after **edit history**), extend the deadline once, close donations early, cancel the campaign
+- **Withdrawal voting** (approve/reject) with vote progress, deadline, and quorum
+- **Updates** from the fundraiser, stored permanently on-chain
+- **Fund transparency**: raised / withdrawn / remaining, plus proof of each withdrawal transaction
+- **Refunds**: donors reclaim the remaining balance when a campaign is cancelled, taken down, or abandoned
+- **Moderation**: public reports, a _Verified_ badge, admin **takedown**, and a takedown **appeal**
+- **Notifications** (bell icon): donations & votes on your campaigns, withdrawal requests & updates from campaigns you support or follow, appeal decisions, and **reminders** for favorites ending within 3 days
+- **Profile names & ENS**: wallet addresses are shown as an on-chain profile name or an ENS name
+- **Platform stats** (`/stats`): total raised, unique donors, donations per day, funds per category, top campaigns and donors
+- **Fundraiser profile** (`/creators/<address>`): total raised, unique donors, daily donation chart
+- **Admin panel** (`/admin`): reported campaigns, verification queue, appeals, and taken-down campaigns
+- **Share button** (copy link, WhatsApp, X, Telegram, Facebook) with a **link preview** (title, description, and an auto-generated progress image via `/api/og`)
+- **Indonesian / English** and **dark mode**: toggles in the navbar, remembered in the browser
+- **Real-time**: data refreshes automatically on every new transaction, without reloading the page
+- **Connection status**: connect wallet button, wrong-network warning, and a message when the blockchain is unreachable
 
-## Aturan platform
+## Platform rules
 
-**Model dana: keep-it-all.** Penggalang dana boleh menarik dana berapa pun yang terkumpul, tidak harus mencapai target, tetapi **setiap penarikan harus disetujui donatur**.
+**Funding model: keep-it-all.** The fundraiser may withdraw whatever has been raised without reaching the goal, but **every withdrawal needs donor approval**.
 
-| Aturan         | Ringkas                                                                                |
-| -------------- | -------------------------------------------------------------------------------------- |
-| Donasi         | Dibuka sampai deadline, minimal sebesar donasi minimum kampanye                        |
-| Penarikan dana | Wajib beralasan, lalu di-voting donatur selama 3 hari                                  |
-| Disetujui      | Setuju > 50% donatur, atau setelah 3 hari dengan kuorum 20% dan setuju lebih banyak    |
-| Refund         | Kampanye dibatalkan/dihentikan admin, atau penggalang dana tidak aktif 30 hari         |
-| Moderasi       | Laporan publik, badge terverifikasi, takedown oleh admin, dan banding 1x dalam 14 hari |
+| Rule          | Summary                                                                               |
+| ------------- | ------------------------------------------------------------------------------------- |
+| Donations     | Open until the deadline, at least the campaign's minimum donation                     |
+| Withdrawals   | Require a reason, then a 3-day donor vote                                             |
+| Approved when | More than 50% of donors approve, or after 3 days with a 20% quorum and more approvals |
+| Refunds       | Campaign cancelled, taken down, or the fundraiser inactive for 30 days                |
+| Moderation    | Public reports, verified badge, admin takedown, and one appeal within 14 days         |
 
-Rincian lengkapnya (tabel kondisi voting, dana terbengkalai, cara hitung refund, banding) ada di
-**[docs/ATURAN.md](docs/ATURAN.md)**. Penjelasan cara kerja kode ada di **[docs/ARSITEKTUR.md](docs/ARSITEKTUR.md)**.
+Full details (voting outcome table, abandoned funds, how refunds are calculated, appeals) are in **[docs/ATURAN.md](docs/ATURAN.md)**. How the code works is described in **[docs/ARSITEKTUR.md](docs/ARSITEKTUR.md)**. Both documents are written in Indonesian.
 
-## Prasyarat
+## Requirements
 
 - Node.js 20
-- Browser dengan ekstensi [MetaMask](https://metamask.io/download/)
+- A browser with the [MetaMask](https://metamask.io/download/) extension
 
-## Menjalankan di komputer lokal
+## Running locally
 
-Pertama kali, pasang semua dependency dari root proyek:
+First, install every dependency from the project root:
 
 ```bash
 npm run install:all
 ```
 
-Lalu buka **dua terminal** di root proyek:
+Then open **two terminals** in the project root:
 
 ```bash
-# Terminal 1 — blockchain lokal (biarkan tetap berjalan)
+# Terminal 1 — local blockchain (leave it running)
 npm run node
 ```
 
 ```bash
-# Terminal 2 — deploy contract, isi data demo, jalankan frontend
+# Terminal 2 — deploy contracts, seed demo data, start the frontend
 npm run deploy:local
-npm run seed:local   # opsional: 3 kampanye, donasi, kabar, dan 1 kampanye terverifikasi
+npm run seed:local   # optional: 3 campaigns, donations, an update, and 1 verified campaign
 npm run dev
 ```
 
-Buka http://localhost:4000 dan klik **Hubungkan MetaMask**.
+Open http://localhost:4000 and click **Connect MetaMask**.
 
-> Setiap kali `npm run node` di-restart, blockchain kembali kosong. Ulangi `deploy:local` (dan `seed:local`), lalu reset MetaMask (lihat di bawah).
+> Every time `npm run node` restarts, the blockchain is empty again. Re-run `deploy:local` (and `seed:local`), then reset MetaMask (see below).
 
-**Mode dev tanpa MetaMask.** Di jaringan lokal (chain 31337), browser tanpa MetaMask otomatis memakai Account #0 dari Hardhat (ditandai `dev` di navbar). Berguna untuk mencoba cepat; untuk berganti akun gunakan MetaMask.
+**Dev mode without MetaMask.** On the local chain (id 31337), a browser without MetaMask automatically uses Hardhat's Account #0 (marked `dev` in the navbar). Handy for a quick look; use MetaMask to switch accounts.
 
-## Setting MetaMask
+## MetaMask setup
 
-Jaringan akan ditawarkan otomatis saat menghubungkan dompet. Kalau ingin menambahkannya manual:
+The network is offered automatically when you connect your wallet. To add it manually:
 
-| Kolom           | Nilai                   |
+| Field           | Value                   |
 | --------------- | ----------------------- |
 | Network name    | Hardhat Localhost       |
 | RPC URL         | `http://127.0.0.1:8545` |
 | Chain ID        | `31337`                 |
 | Currency symbol | ETH                     |
 
-**Akun test.** `npm run node` menampilkan 20 akun berisi 10000 ETH beserta private key-nya. Import beberapa akun ke MetaMask (_Add account → Import account_). Data demo dari `seed:local` memakai:
+**Test accounts.** `npm run node` prints 20 accounts holding 10,000 ETH each, along with their private keys. Import a few into MetaMask (_Add account → Import account_). The demo data from `seed:local` uses:
 
-| Kampanye                          | Pembuat    | Donatur        | Catatan                        |
-| --------------------------------- | ---------- | -------------- | ------------------------------ |
-| Beasiswa untuk 50 anak di pelosok | Account #0 | Account #1, #2 | Ada 1 kabar terbaru            |
-| Renovasi perpustakaan desa        | Account #1 | Account #0     |                                |
-| Air bersih untuk Nusa Tenggara    | Account #2 | Account #3     | Target tercapai, terverifikasi |
+| Campaign                          | Creator    | Donors         | Notes                       |
+| --------------------------------- | ---------- | -------------- | --------------------------- |
+| Beasiswa untuk 50 anak di pelosok | Account #0 | Account #1, #2 | Has one update and one edit |
+| Renovasi perpustakaan desa        | Account #1 | Account #0     |                             |
+| Air bersih untuk Nusa Tenggara    | Account #2 | Account #3     | Goal reached, verified      |
 
-Account #0 juga admin (akun deployer).
+Account #0 is also the admin (the deployer account).
 
-> Private key akun Hardhat bersifat publik. Jangan pernah dipakai di jaringan asli.
+> Hardhat private keys are public. Never use them on a real network.
 
-**Setelah node di-restart**, transaksi bisa gagal karena nonce lama. Buka MetaMask → _Settings → Advanced → Clear activity tab data_.
+**After restarting the node**, transactions can fail because of stale nonces. Open MetaMask → _Settings → Advanced → Clear activity tab data_.
 
-## Konfigurasi frontend (`frontend/.env.local`)
+## Frontend configuration (`frontend/.env.local`)
 
-Nilai default sudah cocok untuk Hardhat node lokal. Kalau alamat contract atau jaringan berbeda (misalnya deploy ke testnet):
+The defaults already match a local Hardhat node. If the contract address or the network differs (for example when deploying to a testnet):
 
 ```bash
-cp frontend/.env.example frontend/.env.local   # lalu edit nilainya, dan restart `npm run dev`
+cp frontend/.env.example frontend/.env.local   # edit the values, then restart `npm run dev`
 ```
 
-| Variabel                           | Default                                                                                           |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_CROWDFUNDING_ADDRESS` | `0x5FbDB2315678afecb367f032d93F642f64180aa3`                                                      |
-| `NEXT_PUBLIC_CHAIN_ID`             | `31337`                                                                                           |
-| `NEXT_PUBLIC_RPC_URL`              | `http://127.0.0.1:8545`                                                                           |
-| `NEXT_PUBLIC_NETWORK_NAME`         | `Hardhat Localhost`                                                                               |
-| `NEXT_PUBLIC_EXPLORER_URL`         | kosong. Isi misalnya `https://sepolia.etherscan.io` agar hash transaksi penarikan menjadi link    |
-| `NEXT_PUBLIC_ENS_RPC_URL`          | RPC Ethereum mainnet untuk nama & avatar ENS (default publicnode). Isi kosong untuk menonaktifkan |
-| `NEXT_PUBLIC_APP_URL`              | kosong. Alamat publik aplikasi untuk tautan _Bagikan_ dan preview link                            |
+| Variable                           | Default                                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_CROWDFUNDING_ADDRESS` | `0x5FbDB2315678afecb367f032d93F642f64180aa3`                                                  |
+| `NEXT_PUBLIC_CHAIN_ID`             | `31337`                                                                                       |
+| `NEXT_PUBLIC_RPC_URL`              | `http://127.0.0.1:8545`                                                                       |
+| `NEXT_PUBLIC_NETWORK_NAME`         | `Hardhat Localhost`                                                                           |
+| `NEXT_PUBLIC_EXPLORER_URL`         | empty. Set e.g. `https://sepolia.etherscan.io` to turn transaction hashes into links          |
+| `NEXT_PUBLIC_ENS_RPC_URL`          | Ethereum mainnet RPC for ENS names & avatars (defaults to publicnode). Leave empty to disable |
+| `NEXT_PUBLIC_APP_URL`              | empty. Public address of the app, used for _Share_ links and link previews                    |
 
-**Perkiraan nilai Rupiah** diambil dari API publik CoinGecko (kurs ETH/IDR, di-cache 5 menit). Jika gagal dimuat (misalnya offline), nilai Rupiah disembunyikan dan aplikasi tetap berjalan normal. Di jaringan lokal/testnet ETH tidak bernilai uang; angka Rupiah hanya ilustrasi.
+**The Rupiah estimate** comes from the public CoinGecko API (ETH/IDR rate, cached for 5 minutes). If it fails to load (when offline, for instance) the Rupiah value is hidden and the app keeps working. On a local or test network ETH has no monetary value, so the Rupiah figure is illustrative only.
 
-## Perintah
+## Commands
 
-Semua perintah dijalankan dari root proyek.
+Run all of these from the project root.
 
-| Perintah               | Fungsi                                                   |
-| ---------------------- | -------------------------------------------------------- |
-| `npm run install:all`  | Pasang dependency root, `smart-contract`, dan `frontend` |
-| `npm run node`         | Menjalankan blockchain lokal (Hardhat)                   |
-| `npm run deploy:local` | Deploy contract ke node lokal                            |
-| `npm run seed:local`   | Mengisi data demo                                        |
-| `npm run dev`          | Frontend di http://localhost:4000                        |
-| `npm test`             | Unit test contract (Hardhat) dan frontend (Jest)         |
-| `npm run lint`         | ESLint frontend                                          |
-| `npm run build`        | Build produksi frontend                                  |
-| `npm run format`       | Format semua file (Prettier, termasuk Solidity)          |
-| `npm run format:check` | Cek format tanpa mengubah file                           |
+| Command                | What it does                                                |
+| ---------------------- | ----------------------------------------------------------- |
+| `npm run install:all`  | Install dependencies for root, `smart-contract`, `frontend` |
+| `npm run node`         | Start the local blockchain (Hardhat)                        |
+| `npm run deploy:local` | Deploy the contracts to the local node                      |
+| `npm run seed:local`   | Seed demo data                                              |
+| `npm run dev`          | Frontend at http://localhost:4000                           |
+| `npm test`             | Contract tests (Hardhat) and frontend tests (Jest)          |
+| `npm run lint`         | ESLint for the frontend                                     |
+| `npm run build`        | Production build of the frontend                            |
+| `npm run format`       | Format every file (Prettier, including Solidity)            |
+| `npm run format:check` | Check formatting without changing files                     |
 
-Perintah khusus smart contract (jalankan dengan `npm --prefix smart-contract run <perintah>`):
+Smart-contract specific commands (run them with `npm --prefix smart-contract run <command>`):
 
-| Perintah   | Fungsi                                                                          |
-| ---------- | ------------------------------------------------------------------------------- |
-| `compile`  | Compile contract; ABI & konstanta aturan di `frontend/lib/abi/` ikut diperbarui |
-| `coverage` | Laporan cakupan test (`smart-contract/coverage/`)                               |
-| `test:gas` | Test beserta laporan biaya gas per fungsi                                       |
-| `slither`  | Analisis keamanan statis (butuh [Slither](https://github.com/crytic/slither))   |
+| Command    | What it does                                                                           |
+| ---------- | -------------------------------------------------------------------------------------- |
+| `compile`  | Compile the contracts; the ABI and rule constants in `frontend/lib/abi/` are refreshed |
+| `coverage` | Test coverage report (`smart-contract/coverage/`)                                      |
+| `test:gas` | Tests plus a gas cost report per function                                              |
+| `slither`  | Static security analysis (requires [Slither](https://github.com/crytic/slither))       |
 
-Setelah mengubah contract, jalankan `compile` lalu deploy ulang.
+After changing a contract, run `compile` and deploy again.
 
-## Continuous Integration
+**Rule constants** (`VOTING_PERIOD`, `QUORUM_PERCENT`, `ABANDON_PERIOD`, `MAX_EXTENSION`, `APPEAL_PERIOD`, text length limits) live only in Solidity. `compile` exports them to `frontend/lib/abi/rules.json`, and the frontend derives every constant from that file, so no number has to be kept in sync by hand.
 
-Workflow `.github/workflows/ci.yml` berjalan setiap push ke `main`/`master` dan setiap pull request:
+## Continuous integration
 
-- **Smart contract**: `npm test` dan `npm run coverage`
-- **Slither**: analisis keamanan, gagal jika ada temuan tingkat _medium_ ke atas
+`.github/workflows/ci.yml` runs on every push to `main`/`master` and on every pull request:
+
+- **Smart contract**: `npm test` and `npm run coverage`
+- **Slither**: static security analysis, failing on _medium_ severity and above
 - **Frontend**: `npm run lint`, `npm test`, `npm run build`
 - **Format**: `npm run format:check`
 
 ## Troubleshooting
 
-| Masalah                               | Solusi                                                                                                        |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Banner merah "Tidak dapat terhubung"  | Pastikan `npm run node` berjalan dan `npm run deploy:local` sudah dijalankan setelah node terakhir di-restart |
-| Banner kuning "jaringan lain"         | Klik tombol _Pindah ke Hardhat Localhost_ di banner                                                           |
-| "Failed to connect to MetaMask"       | Unlock MetaMask, matikan ekstensi wallet lain, lalu refresh halaman                                           |
-| Saldo 0 ETH di MetaMask               | Pastikan jaringan _Hardhat Localhost_ aktif dan akun Hardhat sudah di-import                                  |
-| Transaksi gagal / nonce error         | _Settings → Advanced → Clear activity tab data_                                                               |
-| `Error HH700: Artifact ... not found` | Cache Hardhat tidak sinkron. Jalankan `npx hardhat clean` lalu `npm run compile` di folder `smart-contract`   |
+| Problem                               | Fix                                                                                              |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Red banner "cannot connect"           | Make sure `npm run node` is running and `npm run deploy:local` ran after the last node restart   |
+| Yellow banner "wrong network"         | Click _Switch to Hardhat Localhost_ in the banner                                                |
+| "Failed to connect to MetaMask"       | Unlock MetaMask, disable other wallet extensions, then reload the page                           |
+| 0 ETH balance in MetaMask             | Check that the _Hardhat Localhost_ network is selected and a Hardhat account was imported        |
+| Transaction fails / nonce error       | _Settings → Advanced → Clear activity tab data_                                                  |
+| `Error HH700: Artifact ... not found` | Hardhat cache is out of sync. Run `npx hardhat clean` then `npm run compile` in `smart-contract` |

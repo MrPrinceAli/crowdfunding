@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 // Kampanye favorit disimpan di browser (per perangkat), bukan di blockchain
-const KEY = "crowdfunding-favorites";
-const EVENT = "crowdfunding-favorites-change";
+const KEY = "himpun-favorites";
+const EVENT = "himpun-favorites-change";
 
 const readFavorites = () => {
   try {

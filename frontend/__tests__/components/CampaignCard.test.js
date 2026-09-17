@@ -61,6 +61,6 @@ describe("CampaignCard", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Simpan ke favorit" }));
     expect(screen.getByRole("button", { name: "Hapus dari favorit" })).toBeInTheDocument();
-    expect(JSON.parse(window.localStorage.getItem("crowdfunding-favorites"))).toContain(campaign.address.toLowerCase());
+    expect(JSON.parse(window.localStorage.getItem("himpun-favorites"))).toContain(campaign.address.toLowerCase());
   });
 });

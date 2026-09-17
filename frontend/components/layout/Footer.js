@@ -8,7 +8,7 @@ const Footer = () => {
       <div className="text-muted mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm sm:flex-row sm:px-6 lg:px-8">
         <div className="text-body flex items-center gap-2 font-semibold">
           <HandsIcon className="text-accent h-4 w-4" />
-          Crowdfunding
+          Himpun
         </div>
         <p>{t("footer.tagline")}</p>
       </div>
